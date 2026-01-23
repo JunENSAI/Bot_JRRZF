@@ -30,17 +30,42 @@ def analyze_pgn():
     
     print(f"Lecture du fichier : {PGN_FILE}...")
     
+    games_data = [] # Liste pour la table 'games'
+    moves_data = [] # Liste pour la table 'moves'
+
+    seen_game_ids = set()
+    
     with open(PGN_FILE) as pgn:
         while True:
             game = chess.pgn.read_game(pgn)
-            if game is None:
-                break # Fin du fichier
+            if game is None: break
 
             headers = game.headers
             white = headers.get("White", "?")
             black = headers.get("Black", "?")
+            date_played = headers.get("Date", "1970.01.01").replace(".", "-")
             
-            # Détermine ta couleur
+            # ID unique pour la partie
+            game_id = f"{date_played}_{white}_{black}".replace(" ", "_")
+
+            if game_id in seen_game_ids:
+                continue 
+
+            seen_game_ids.add(game_id)
+
+            games_data.append({
+                "game_id": game_id,
+                "white_player": white,
+                "black_player": black,
+                "white_elo": headers.get("WhiteElo", 0),
+                "black_elo": headers.get("BlackElo", 0),
+                "date_played": date_played,
+                "result": headers.get("Result", "*"),
+                "opening_code": headers.get("ECO", ""),
+                "pgn_event": headers.get("Event", "")
+            })
+
+            # Identification du joueur 
             if white == MY_USERNAME:
                 my_color = chess.WHITE
             elif black == MY_USERNAME:
@@ -49,40 +74,33 @@ def analyze_pgn():
                 continue 
 
             board = game.board()
-            games_processed += 1
-            if games_processed % 10 == 0:
-                print(f"Traitement de la partie n°{games_processed} ({white} vs {black})...")
-
+            
             for node in game.mainline():
                 if board.turn == my_color:
-
+                    
                     info = engine.analyse(board, chess.engine.Limit(depth=DEPTH))
+                    best_move = info["pv"][0].uci() if "pv" in info else ""
                     
-                    best_move = info["pv"][0] if "pv" in info else None
-                    score = info["score"].white() # Score vu des blancs
+                    score_obj = info["score"].white() if board.turn == chess.WHITE else info["score"].black()
+                    score_val = score_obj.score(mate_score=10000)
                     
-                    if score.is_mate():
-                        eval_val = 10000 if score.mate() > 0 else -10000
-                    else:
-                        eval_val = score.score()
-
-                    data_rows.append({
-                        "game_id": f"{headers.get('Date')}_{headers.get('White')}_vs_{headers.get('Black')}",
-                        "opening": headers.get("ECO", ""),
+                    moves_data.append({
+                        "game_id": game_id,
                         "fen": board.fen(),
-                        "my_move": node.move.uci(),
-                        "best_move": best_move.uci() if best_move else "",
-                        "score": eval_val,
-                        "is_blunder": False
+                        "turn": "white" if board.turn == chess.WHITE else "black",
+                        "move_number": board.fullmove_number,
+                        "played_move": node.move.uci(),
+                        "stockfish_best_move": best_move,
+                        "eval_score": score_val
                     })
 
                 board.push(node.move)
 
     engine.quit()
-    
-    df = pd.DataFrame(data_rows)
-    df.to_csv("dataset_entrainement.csv", index=False)
-    print(f"Terminé ! {len(df)} positions analysées sauvegardées dans dataset_entrainement.csv")
+
+    pd.DataFrame(games_data).to_csv("games.csv", index=False)
+    pd.DataFrame(moves_data).to_csv("moves.csv", index=False)
+    print("Export terminé : games.csv et moves.csv générés.")
 
 if __name__ == "__main__":
     analyze_pgn()
