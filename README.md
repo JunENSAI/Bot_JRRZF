@@ -9,7 +9,7 @@ Stockfish est le bot ultime en terme de jeux d'echecs. Il est opensource donc qu
 - Créer un environnement virtuel pour ne pas avoir de problème de dépendances
 
 ```bash
-python3 -m venv jr_bot
+python3 -m venv bot_jr
 ```
 - Activer l'environnement virtuel que vous venez de créer :
 
