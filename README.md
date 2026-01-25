@@ -318,19 +318,32 @@ En clonant le repo vous aurez pas besoin de passer par toutes les étapes juste 
 
 ### Architecture
 
-1. Components (`src/components/`) : Briques d'interface réutilisables (UI pure, sans logique métier complexe).
+1. **Components** (`src/components/`) : Briques d'interface réutilisables (UI pure, sans logique métier complexe).
 
     - **`ChessBoard.jsx`** : 
         - Encapsule la librairie `chessboardjsx`.
         - Configure le style (couleurs vert/crème), les images des pièces et l'orientation du plateau.
-        
+
     - **`GameControl.jsx`** : 
         - Affiche le statut du jeu ("Trait aux Blancs") et les boutons d'action (Abandonner, Nulle).
+
     - **`Navbar.jsx`** : 
         - Barre de navigation supérieure. Affiche le pseudo de l'utilisateur connecté et le bouton Déconnexion.
+
     - **`Menu.jsx`** : 
         - Composant pour les gros boutons du Dashboard.
+
     - **`Stats.jsx`** : 
         - Composant d'affichage pour les statistiques (ex: "% Victoires").
+
+2. **Pages** (`src/pages/`) : Ce sont les écrans principaux de l'application.
+
+    - **`Login.jsx`** : 
+        - Formulaire de connexion.
+        - Envoie les identifiants à Java (`/api/auth/login`).
+        - Redirige vers le Dashboard en cas de succès.
+
+    - **`Dashboard.jsx`** : 
+        - Menu principal affichant les 4 cartes d'accès (Jouer, Profil, Ouvertures, Historique).
 
 

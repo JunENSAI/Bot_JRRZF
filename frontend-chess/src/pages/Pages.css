@@ -1,3 +1,13 @@
+/* --- Global Container --- */
+.login-container, .dashboard-container{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 80vh;
+    color: var(--text-light);
+}
+
 /* --- Login --- */
 .login-box {
     background: var(--bg-card);
@@ -27,3 +37,11 @@
     border-radius: 4px;
 }
 .error-msg { color: var(--danger); font-size: 0.9em; }
+
+/* --- Dashboard --- */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-top: 20px;
+}
