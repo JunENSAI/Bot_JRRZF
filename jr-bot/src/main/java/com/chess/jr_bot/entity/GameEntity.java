@@ -16,7 +16,7 @@ import lombok.Data;
 public class GameEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
     @Column(name = "white_player")
     private String whitePlayer;
