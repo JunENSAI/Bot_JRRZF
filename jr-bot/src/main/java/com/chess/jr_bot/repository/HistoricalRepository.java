@@ -11,6 +11,8 @@ import com.chess.jr_bot.entity.HistoricalMoveEntity;
 
 public interface HistoricalRepository extends JpaRepository<HistoricalMoveEntity, Long> {
 
+  List<HistoricalMoveEntity> findByGameIdOrderByMoveNumberAsc(String gameId);
+
     // Stats pour les Blancs (Move 1, Turn White)
     @Query(value = """
         SELECT m.played_move as move,
