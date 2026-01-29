@@ -4,30 +4,35 @@
     <meta charset="UTF-8">
     <title>Entraînement - JrBot</title>
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
-    <button onclick="window.location.href='dashboard.html'" class="btn-back">⬅ Dashboard</button>
-    
-    <div class="training-container">
-        <h2>Entraînement Tactique</h2>
+
+<body class="training-mode">
+
+    <button onclick="window.location.href='dashboard.html'" class="btn-back">🔙 Dashboard</button>
+
+    <div class="training-wrapper">
         
-        <div class="controls-training" style="margin-bottom: 20px;">
-            <button class="mode-btn active" onclick="setMode('winning')">Gagnant (Ratés)</button>
+        <h2 style="margin-top: 0; text-transform: uppercase; letter-spacing: 2px; color: #666;">Tactique</h2>
+
+        <div class="mode-controls">
+            <button class="mode-btn active" onclick="setMode('winning')">Gagnant</button>
             <button class="mode-btn" onclick="setMode('endgame')">Finales</button>
             <button class="mode-btn" onclick="setMode('opening')">Ouvertures</button>
         </div>
 
-        <div id="board-training" style="width: 500px"></div>
-        
-        <div id="feedback" class="feedback">Trouve le meilleur coup !</div>
-        
-        <div class="controls-training">
-            <button class="btn-primary" onclick="loadNewPuzzle()">Passer / Suivant ⏭️</button>
+        <div id="board" style="width: 480px"></div>
+
+        <div id="feedback" class="feedback">À toi de jouer...</div>
+
+        <div class="action-area">
+            <button class="btn-next" onclick="loadNewPuzzle()">Puzzle Suivant ➡</button>
         </div>
-        <div style="margin-top:10px; color:#666; font-size:0.9em">
-            Tiré de la partie : <span id="game-source">-</span>
+
+        <div style="margin-top: 20px; color: #444; font-size: 0.8em;">
+            Source : <span id="game-source">...</span>
         </div>
+
     </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>

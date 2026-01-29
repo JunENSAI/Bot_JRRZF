@@ -341,44 +341,103 @@ button:hover { opacity: 0.8; }
 
 /* training.html */
 
-.training-container {
+body.training-mode {
+    background-color: #000000; /* Fond NOIR */
+    color: #eeeeee;
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centre horizontalement */
+    min-height: 100vh;
+}
+
+/* Le conteneur principal centré */
+.training-wrapper {
+    width: 100%;
+    max-width: 600px; /* Limite la largeur pour que ça reste lisible */
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-top: 20px;
+    padding: 20px;
 }
 
-.controls-training {
-    margin-top: 20px;
+/* Le Plateau */
+#board {
+    width: 480px !important;
+    margin: 20px 0;
+    border: 5px solid #333; /* Petit cadre gris foncé */
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.05); /* Lueur subtile */
+}
+
+/* Les Boutons de mode (Haut) */
+.mode-controls {
     display: flex;
     gap: 10px;
-}
-
-.feedback {
-    margin-top: 15px;
-    font-size: 1.2em;
-    font-weight: bold;
-    min-height: 30px;
-}
-
-.success {
-    color: #4caf50;
-}
-
-.error {
-    color: #f44336;
+    margin-bottom: 10px;
+    background: #111;
+    padding: 5px;
+    border-radius: 30px;
+    border: 1px solid #333;
 }
 
 .mode-btn {
-    padding: 10px 20px;
-    cursor: pointer;
-    background: #333;
-    color: white;
+    background: transparent;
     border: none;
-    border-radius: 4px;
+    color: #888;
+    padding: 8px 15px;
+    cursor: pointer;
+    border-radius: 20px;
+    font-weight: 600;
+    transition: all 0.3s;
 }
+
+.mode-btn:hover { color: #fff; }
 
 .mode-btn.active {
-    background: #4caf50;
+    background: #4caf50; /* Vert */
+    color: white;
+    box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
 }
 
+/* Feedback et Action (Bas) */
+.feedback {
+    font-size: 1.4em;
+    font-weight: bold;
+    text-align: center;
+    margin: 10px 0;
+    min-height: 40px;
+}
+.success { color: #4caf50; }
+.error { color: #f44336; }
+
+.action-area {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.btn-next {
+    background-color: #212121;
+    color: white;
+    border: 1px solid #444;
+    padding: 12px 40px;
+    font-size: 1.1em;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.btn-next:hover { background-color: #333; border-color: #fff; }
+
+.btn-back {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: #111;
+    color: #888;
+    border: 1px solid #333;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+.btn-back:hover { color: white; border-color: #666; }

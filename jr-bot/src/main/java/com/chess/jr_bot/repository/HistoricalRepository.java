@@ -12,7 +12,7 @@ import com.chess.jr_bot.entity.HistoricalMoveEntity;
 public interface HistoricalRepository extends JpaRepository<HistoricalMoveEntity, Long> {
 
   List<HistoricalMoveEntity> findByGameIdOrderByMoveNumberAsc(String gameId);
-  
+
     // Stats pour les Blancs (Move 1, Turn White)
     @Query(value = """
         SELECT m.played_move as move,
@@ -51,17 +51,12 @@ public interface HistoricalRepository extends JpaRepository<HistoricalMoveEntity
     @Query(value = """
         SELECT * FROM chess_bot.moves m
         WHERE 
-        -- 1. On filtre selon le type d'exercice
         (:type = 'opening' AND m.move_number <= 10)
         OR
         (:type = 'endgame' AND m.move_number > 30)
         OR
-        (:type = 'winning' AND ABS(m.eval_score) > 200) -- Avantage > 2 pions
-        
-        -- 2. On s'assure que c'est une position jouable
+        (:type = 'winning' AND ABS(m.eval_score) > 200)
         AND m.fen IS NOT NULL
-        
-        -- 3. ALÉATOIRE
         ORDER BY RANDOM()
         LIMIT 1
     """, nativeQuery = true)
