@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
@@ -23,10 +25,12 @@ import com.chess.jr_bot.repository.HistoricalRepository;
 @RequestMapping("/api/historical")
 public class HistoricalController {
 
-    private final HistoricalRepository repository;         // Gère les Moves & Stats
-    private final HistoricalGameRepository gameRepository; // Gère la liste des Games
+    private static final Logger logger = LoggerFactory.getLogger(HistoricalController.class);
 
-    // Injection des deux repositories via le constructeur
+
+    private final HistoricalRepository repository;
+    private final HistoricalGameRepository gameRepository;
+
     public HistoricalController(HistoricalRepository repository, HistoricalGameRepository gameRepository) {
         this.repository = repository;
         this.gameRepository = gameRepository;
@@ -45,29 +49,31 @@ public class HistoricalController {
         ));
     }
 
-    // --- LISTE DES PARTIES (Paginée & Filtrée) ---
     @GetMapping("/games")
-    public ResponseEntity<Page<HistoricalGameEntity>> getHistoricalGames(
+    public ResponseEntity<?> getHistoricalGames(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "30") int size,
-            @RequestParam(defaultValue = "") String category) {
+            @RequestParam(defaultValue = "") String search
+        ) {
         
         String player = "JRRZF";
-        Page<HistoricalGameEntity> result;
+        
+        try {
+            System.out.println("Tentative de récupération des parties pour : " + player);
+            
+            Page<HistoricalGameEntity> result = gameRepository.searchGames(search, PageRequest.of(page, size));
+            
+            System.out.println("Succès ! Nombre de parties trouvées : " + result.getTotalElements());
+            return ResponseEntity.ok(result);
 
-        // Si la catégorie est vide ou "All", on prend tout
-        if (category == null || category.isEmpty() || category.equals("All")) {
-            result = gameRepository.findAllGames(player, PageRequest.of(page, size));
-        } else {
-            // Sinon on filtre (Blitz, Bullet, etc.)
-            result = gameRepository.findGamesByType(player, category, PageRequest.of(page, size));
+        } catch (Exception e) {
+            logger.error("erreur :", e);
+            return ResponseEntity.internalServerError().body("Une erreur s'est produite");
         }
-        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/game-moves")
     public ResponseEntity<List<HistoricalMoveEntity>> getGameMoves(@RequestParam String gameId) {
-        // Récupère tous les coups de la partie, triés par ordre chronologique
         return ResponseEntity.ok(repository.findByGameIdOrderByMoveNumberAsc(gameId));
     }
 

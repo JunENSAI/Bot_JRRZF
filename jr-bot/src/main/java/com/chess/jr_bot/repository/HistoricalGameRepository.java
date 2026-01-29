@@ -1,26 +1,33 @@
 package com.chess.jr_bot.repository;
 
+import com.chess.jr_bot.entity.HistoricalGameEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import com.chess.jr_bot.entity.HistoricalGameEntity;
-
 public interface HistoricalGameRepository extends JpaRepository<HistoricalGameEntity, String> {
 
-    @Query("SELECT g FROM HistoricalGameEntity g WHERE " +
-           "(g.whitePlayer = :player OR g.blackPlayer = :player) AND " +
-           "LOWER(g.pgnEvent) LIKE LOWER(CONCAT('%', :type, '%')) " +
-           "ORDER BY g.datePlayed DESC")
-    Page<HistoricalGameEntity> findGamesByType(@Param("player") String player, 
-                                               @Param("type") String type, 
-                                               Pageable pageable);
-
-    // Récupère TOUTES les parties si pas de type
-    @Query("SELECT g FROM HistoricalGameEntity g WHERE " +
-           "g.whitePlayer = :player OR g.blackPlayer = :player " +
-           "ORDER BY g.datePlayed DESC")
-    Page<HistoricalGameEntity> findAllGames(@Param("player") String player, Pageable pageable);
+    @Query(value = """
+        SELECT * FROM chess_bot.games 
+        WHERE (LOWER(white_player) = 'jrrzf' OR LOWER(black_player) = 'jrrzf')
+        AND (
+            LOWER(white_player) LIKE LOWER(CONCAT('%', :search, '%')) 
+            OR 
+            LOWER(black_player) LIKE LOWER(CONCAT('%', :search, '%'))
+        )
+        ORDER BY date_played DESC
+    """, 
+    countQuery = """
+        SELECT count(*) FROM chess_bot.games 
+        WHERE (LOWER(white_player) = 'jrrzf' OR LOWER(black_player) = 'jrrzf')
+        AND (
+            LOWER(white_player) LIKE LOWER(CONCAT('%', :search, '%')) 
+            OR 
+            LOWER(black_player) LIKE LOWER(CONCAT('%', :search, '%'))
+        )
+    """,
+    nativeQuery = true)
+    Page<HistoricalGameEntity> searchGames(@Param("search") String search, Pageable pageable);
 }

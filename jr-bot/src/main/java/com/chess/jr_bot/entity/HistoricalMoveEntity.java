@@ -6,9 +6,11 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.Data;
 
 @Entity
 @Table(name = "moves", schema = "chess_bot")
+@Data
 public class HistoricalMoveEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,7 +21,7 @@ public class HistoricalMoveEntity {
 
     @Column(nullable = false) 
     private String fen;
-    private String turn; // "White" ou "Black"
+    private String turn;
     
     @Column(name = "move_number")
     private Integer moveNumber;
@@ -27,6 +29,7 @@ public class HistoricalMoveEntity {
     @Column(name = "played_move")
     private String playedMove;
 
-    // Getters Setters
-    public String getPlayedMove() { return playedMove; }
+    @Column(name = "eval_score")
+    private Integer evalScore;
+
 }

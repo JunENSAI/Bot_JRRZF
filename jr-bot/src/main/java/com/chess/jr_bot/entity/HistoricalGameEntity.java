@@ -1,15 +1,18 @@
 package com.chess.jr_bot.entity;
 
-import java.time.LocalDate;
+import java.sql.Date;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.Data;
 
 @Entity
 @Table(name = "games", schema = "chess_bot")
+@Data
 public class HistoricalGameEntity {
+
     @Id
     @Column(name = "game_id")
     private String gameId;
@@ -20,13 +23,18 @@ public class HistoricalGameEntity {
     @Column(name = "black_player")
     private String blackPlayer;
 
-    private String result; // "1-0", "0-1", "1/2-1/2"
+    @Column(name = "white_elo")
+    private Integer whiteElo;
+
+    @Column(name = "black_elo")
+    private Integer blackElo;
 
     @Column(name = "date_played")
-    private LocalDate datePlayed;
+    private Date datePlayed; 
 
-    public String getGameId() { return gameId; }
-    public String getWhitePlayer() { return whitePlayer; }
-    public String getBlackPlayer() { return blackPlayer; }
-    public String getResult() { return result; }
+    @Column(name = "result")
+    private String result;
+
+    @Column(name = "pgn_event")
+    private String pgnEvent; 
 }
