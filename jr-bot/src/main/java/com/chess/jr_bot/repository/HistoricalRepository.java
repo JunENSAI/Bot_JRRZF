@@ -51,9 +51,9 @@ public interface HistoricalRepository extends JpaRepository<HistoricalMoveEntity
     @Query(value = """
         SELECT * FROM chess_bot.moves m
         WHERE 
-        (:type = 'opening' AND m.move_number <= 10)
+        (:type = 'opening' AND m.move_number >= 3 AND m.move_number <= 15)
         OR
-        (:type = 'endgame' AND m.move_number > 30)
+        (:type = 'endgame' AND m.fen NOT LIKE '%Q%' AND m.fen NOT LIKE '%q%')
         OR
         (:type = 'winning' AND ABS(m.eval_score) > 200)
         AND m.fen IS NOT NULL
