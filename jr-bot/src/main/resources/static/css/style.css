@@ -144,3 +144,157 @@ button:hover { opacity: 0.8; }
     border: 2px solid #4caf50;
     background: #444;
 }
+
+/* analysis.html */
+
+/* class="analysis-container" */
+
+.analysis-container {
+    display: flex;
+    height: 85vh;
+    gap: 20px;
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* <div class="sidebar"> */
+
+.sidebar {
+    flex: 1;
+    background: #3c3c3c;
+    overflow-y: auto;
+    border-radius: 10px;
+    padding: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    min-width: 300px;
+}
+
+.sidebar::-webkit-scrollbar { width: 8px; }
+.sidebar::-webkit-scrollbar-track { background: #333; }
+.sidebar::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
+.sidebar::-webkit-scrollbar-thumb:hover { background: #666; }
+
+/* <div class="search-box" */
+
+.search-box {
+    padding: 10px;
+    display: flex;
+    gap: 5px;
+}
+
+/* id="opponent-search" */
+
+.opponent-search {
+    width: 100%;
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid #555;
+    background: #333;
+    color: white;
+}
+
+/* class="pagination-controls" */
+
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    margin-top: 10px;
+}
+
+/* class="board-area" */
+
+.board-area {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #2b2b2b;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+
+#game-title {
+    margin-bottom: 20px;
+    color: #ddd;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.board-wrapper {
+    display: flex;
+    gap: 15px;
+    align-items: stretch;
+    height: 500px;
+    margin-bottom: 20px;
+}
+
+/* barre d'évaluation */
+
+.eval-container {
+    width: 30px;
+    background: #333;
+    border: 1px solid #555;
+    position: relative;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.eval-bar-black {
+    width: 100%;
+    height: 50%;
+    background: #444;
+    position: absolute;
+    top: 0;
+    transition: height 0.5s ease; 
+}
+
+.eval-bar-white {
+    width: 100%;
+    height: 50%;
+    background: #eee;
+    position: absolute;
+    bottom: 0;
+    transition: height 0.5s ease;
+}
+
+.eval-score {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0.7em;
+    color: #ffeb3b;
+    font-weight: bold;
+    z-index: 10;
+    text-shadow: 1px 1px 2px black;
+    pointer-events: none;
+}
+
+/* ccontrols */
+
+.best-move {
+    margin-bottom: 15px;
+    color: #4caf50;
+    font-weight: bold;
+    font-size: 1.1em;
+    height: 25px;
+}
+
+.controls {
+    display: flex;
+    gap: 10px;
+    background: #3c3c3c;
+    padding: 10px;
+    border-radius: 30px;
+}
+
+.controls button {
+    border-radius: 20px;
+    padding: 8px 16px;
+}
+
+
+
