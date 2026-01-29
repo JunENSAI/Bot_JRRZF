@@ -2,8 +2,9 @@ let board = null;
 let game = new Chess();
 let stockfish = null;
 let currentMode = 'winning';
-let bestMoveFoundByStockfish = null;
+let bestMove = null;
 let puzzleActive = false;
+let moveSequenceCount = 0; 
 
 document.addEventListener("DOMContentLoaded", () => {
     initBoard();
@@ -31,52 +32,60 @@ function initBoard() {
 function initStockfish() {
     stockfish = new Worker('js/stockfish.js');
     stockfish.onmessage = (e) => {
-        if (e.data.includes(" pv ")) {
+        if (typeof e.data === 'string' && e.data.includes(" pv ")) {
             const parts = e.data.split(" pv ");
             const moves = parts[1].split(" ");
-            bestMoveFoundByStockfish = moves[0];
-            console.log("Solution Stockfish:", bestMoveFoundByStockfish);
+            const foundMove = moves[0];
+
+            if (puzzleActive) {
+                bestMove = foundMove;
+                console.log("Solution attendue (Toi):", bestMove);
+            } 
+            else {
+                console.log("Réponse Ordi:", foundMove);
+                makeComputerMove(foundMove);
+            }
         }
     };
     stockfish.postMessage("uci");
 }
 
 async function loadNewPuzzle() {
-    const feedback = document.getElementById("feedback");
-    feedback.innerText = "Chargement...";
-    feedback.className = "feedback";
+    updateFeedback("Chargement...", "");
     puzzleActive = false;
+    moveSequenceCount = 0;
 
     try {
         const res = await fetch(`/api/training/puzzle?type=${currentMode}`);
-        if (!res.ok) throw new Error("Plus de puzzles !");
+        if (!res.ok) throw new Error("Erreur API");
         
         const puzzleData = await res.json();
-
+        
         game.load(puzzleData.fen);
         board.position(game.fen());
         
         let turn = game.turn();
-        let orientation = (turn === 'w') ? 'white' : 'black';
-        board.orientation(orientation);
+        board.orientation(turn === 'w' ? 'white' : 'black');
 
         document.getElementById("game-source").innerText = puzzleData.gameId || "Inconnue";
-        feedback.innerText = (turn === 'w' ? "Les Blancs" : "Les Noirs") + " jouent et gagnent !";
 
-        bestMoveFoundByStockfish = null;
-        stockfish.postMessage("stop");
-        stockfish.postMessage(`position fen ${game.fen()}`);
-        stockfish.postMessage("go depth 15"); 
-
+        updateFeedback((turn === 'w' ? "Les Blancs" : "Les Noirs") + " jouent !", "");
+        askStockfishForBestMove();
         puzzleActive = true;
 
     } catch (e) {
         console.error(e);
-        feedback.innerText = "Erreur chargement puzzle.";
+        updateFeedback("Erreur chargement.", "error");
     }
 }
 
-// --- LOGIQUE DE JEU ---
+function askStockfishForBestMove() {
+    stockfish.postMessage("stop");
+    stockfish.postMessage(`position fen ${game.fen()}`);
+    stockfish.postMessage("go depth 15"); 
+}
+
+// Logique de jeu
 
 function onDragStart(source, piece) {
     if (!puzzleActive) return false;
@@ -98,30 +107,67 @@ function onDrop(source, target) {
     if (move === null) return 'snapback';
 
     const playedMoveUCI = source + target;
-
-    checkSolution(playedMoveUCI);
+    
+    if (bestMove && playedMoveUCI === bestMove) {
+        handleCorrectMove();
+    } else {
+        handleWrongMove();
+        return 'snapback';
+    }
 }
 
-function checkSolution(playedMove) {
-    const feedback = document.getElementById("feedback");
+function handleCorrectMove() {
+    moveSequenceCount++;
+    board.position(game.fen());
     
+    if (game.in_checkmate()) {
+        puzzleSuccess("✨ ECHEC ET MAT ! Bien joué !");
+        return;
+    }
     
-    if (bestMoveFoundByStockfish && playedMove === bestMoveFoundByStockfish) {
-        feedback.innerText = "EXCELLENT ! C'est le meilleur coup.";
-        feedback.className = "feedback success";
+    let maxMoves = (currentMode === 'endgame') ? 4 : 2;
+
+    if (moveSequenceCount >= maxMoves) {
+        puzzleSuccess("✅ Excellent calcul ! Séquence terminée.");
+    } else {
         puzzleActive = false;
+        updateFeedback("Bien joué ! L'adversaire répond...", "success");
 
         setTimeout(() => {
-             loadNewPuzzle(); 
-        }, 1500);
-        
-    } else {
-        feedback.innerText = "Ce n'est pas le meilleur coup. Réessaie !";
-        feedback.className = "feedback error";
-        
-        setTimeout(() => {
-            game.undo();
-            board.position(game.fen());
+            askStockfishForBestMove(); 
         }, 500);
     }
+}
+
+function handleWrongMove() {
+    updateFeedback("Mauvais coup. Réessaie !", "error");
+    game.undo();
+}
+
+function makeComputerMove(computerBestMove) {
+    const from = computerBestMove.substring(0, 2);
+    const to = computerBestMove.substring(2, 4);
+    
+    game.move({ from: from, to: to, promotion: 'q' });
+    board.position(game.fen());
+    
+    if (game.in_checkmate()) {
+        updateFeedback("Tu as été maté... Oups.", "error");
+        return;
+    }
+
+    updateFeedback("À toi ! Trouve la suite.", "");
+    puzzleActive = true;
+    askStockfishForBestMove();
+}
+
+function puzzleSuccess(msg) {
+    puzzleActive = false;
+    updateFeedback(msg, "success");
+}
+
+function updateFeedback(text, className) {
+    const el = document.getElementById("feedback");
+    el.innerText = text;
+    el.className = "feedback " + className;
 }
