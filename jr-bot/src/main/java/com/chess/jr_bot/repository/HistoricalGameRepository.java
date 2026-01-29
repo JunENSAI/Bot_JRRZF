@@ -1,11 +1,12 @@
 package com.chess.jr_bot.repository;
 
-import com.chess.jr_bot.entity.HistoricalGameEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import com.chess.jr_bot.entity.HistoricalGameEntity;
 
 public interface HistoricalGameRepository extends JpaRepository<HistoricalGameEntity, String> {
 

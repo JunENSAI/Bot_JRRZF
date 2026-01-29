@@ -273,7 +273,42 @@ button:hover { opacity: 0.8; }
     pointer-events: none;
 }
 
-/* ccontrols */
+/* game item */
+
+.game-item {
+    padding: 15px;
+    border-bottom: 1px solid #555;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 5px;
+    margin-bottom: 5px;
+}
+
+.game-item:hover {
+    background: #4a4a4a;
+}
+
+.game-item.active {
+    background: #4caf50;
+    color: white;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+}
+
+.badge {
+    font-size: 0.75em;
+    padding: 4px 8px;
+    border-radius: 12px;
+    background: #222;
+    color: #ccc;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+/* controls */
 
 .best-move {
     margin-bottom: 15px;
