@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Entraînement - JrBot</title>
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <button onclick="window.location.href='dashboard.html'" class="btn-back">⬅ Dashboard</button>
+    
+    <div class="training-container">
+        <h2>Entraînement Tactique</h2>
+        
+        <div class="controls-training" style="margin-bottom: 20px;">
+            <button class="mode-btn active" onclick="setMode('winning')">Gagnant (Ratés)</button>
+            <button class="mode-btn" onclick="setMode('endgame')">Finales</button>
+            <button class="mode-btn" onclick="setMode('opening')">Ouvertures</button>
+        </div>
+
+        <div id="board-training" style="width: 500px"></div>
+        
+        <div id="feedback" class="feedback">Trouve le meilleur coup !</div>
+        
+        <div class="controls-training">
+            <button class="btn-primary" onclick="loadNewPuzzle()">Passer / Suivant ⏭️</button>
+        </div>
+        <div style="margin-top:10px; color:#666; font-size:0.9em">
+            Tiré de la partie : <span id="game-source">-</span>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="js/training.js"></script>
+</body>
+</html>
