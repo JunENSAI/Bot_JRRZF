@@ -7,6 +7,7 @@ let blackTime = 300;
 let timerInterval = null;
 let gameActive = false;
 let botPhrases = {};
+let isBotThinking = false; 
 
 const username = localStorage.getItem("username") || "Invité";
 
@@ -14,7 +15,6 @@ const username = localStorage.getItem("username") || "Invité";
 
 document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("playerName").innerText = username;
-    // Charger les phrases du bot
     try {
         const res = await fetch('json/bot_phrases.json');
         botPhrases = await res.json();
@@ -28,7 +28,6 @@ function selectColor(color) {
 }
 
 function startGame() {
-    // 1. Récupérer les options
     const timeVal = document.getElementById("timeControlSelect").value;
     if (timeVal === "no-limit") {
         selectedTime = null;
@@ -41,11 +40,9 @@ function startGame() {
         updateClockDisplay();
     }
 
-    // 2. Initialiser l'interface
     document.querySelector(".game-container").style.filter = "none";
     document.getElementById("setupModal").style.display = "none";
     
-    // 3. Lancer le jeu
     initBoard();
     gameActive = true;
     speak("intro");
@@ -66,19 +63,18 @@ function initBoard() {
     };
     board = Chessboard('board', config);
 
-    // Si le joueur est Noir, le bot (Blanc) joue tout de suite
     if (userColor === 'black') {
         setTimeout(makeBotMove, 500);
     }
 }
 
-// --- 2. LOGIQUE DU TIMER ---
+// --- 2. LOGIQUE DU TIMER (CORRIGÉE) ---
 
 function startTimer() {
     if (timerInterval) clearInterval(timerInterval);
     
     timerInterval = setInterval(() => {
-        if (!gameActive) return;
+        if (!gameActive || isBotThinking) return;
 
         if (game.turn() === 'w') {
             whiteTime--;
@@ -100,7 +96,7 @@ function updateClockDisplay() {
     wDiv.innerText = formatTime(whiteTime);
     bDiv.innerText = formatTime(blackTime);
 
-    // Effet visuel "Qui joue ?"
+    // Indication visuelle de qui joue
     if (game.turn() === 'w') {
         wDiv.classList.add("active-clock");
         bDiv.classList.remove("active-clock");
@@ -111,6 +107,7 @@ function updateClockDisplay() {
 }
 
 function formatTime(seconds) {
+    if (seconds < 0) seconds = 0; // Sécurité visuelle
     const m = Math.floor(seconds / 60).toString().padStart(2, '0');
     const s = (seconds % 60).toString().padStart(2, '0');
     return `${m}:${s}`;
@@ -123,16 +120,16 @@ function timeOut(color) {
     alert(`Temps écoulé ! Les ${loser} ont perdu.`);
     speak("timeout");
     
-    // On sauvegarde la défaite
-    let result = (color === 'white') ? "0-1" : "1-0"; // Si Blanc perd au temps, Noir gagne
+    let result = (color === 'white') ? "0-1" : "1-0"; 
     saveGame(result);
 }
 
 // --- 3. JEU & CHAT ---
 
 function onDragStart(source, piece) {
-    if (game.game_over() || !gameActive) return false;
-    // Vérifier la couleur
+    // On empêche de bouger si c'est fini OU SI LE BOT RÉFLÉCHIT (évite les bugs de clics spam)
+    if (game.game_over() || !gameActive || isBotThinking) return false;
+
     if ((userColor === 'white' && piece.search(/^b/) !== -1) ||
         (userColor === 'black' && piece.search(/^w/) !== -1)) {
         return false;
@@ -143,11 +140,11 @@ function onDrop(source, target) {
     const move = game.move({ from: source, to: target, promotion: 'q' });
     if (move === null) return 'snapback';
 
-    // Chat sur capture
     if (move.captured) speak("capture");
     if (game.in_check()) speak("check");
 
     updateStatus();
+    // Le joueur a joué, c'est au tour du bot
     makeBotMove();
 }
 
@@ -156,37 +153,50 @@ function onSnapEnd() { board.position(game.fen()); }
 async function makeBotMove() {
     if (game.game_over() || !gameActive) return checkGameOver();
 
-    // Appel API
+    // 1. On "gèle" le timer et le plateau
+    isBotThinking = true; 
+
     try {
         const url = `/api/bot/move?fen=${encodeURIComponent(game.fen())}`;
         const res = await fetch(url);
+        
+        if (!res.ok) throw new Error("Erreur serveur Bot");
+
         const botMove = await res.text();
         
+        // 2. On joue le coup
         game.move(botMove, { sloppy: true });
         board.position(game.fen());
         
         if (game.in_check()) speak("check");
         checkGameOver();
         
-    } catch (e) { console.error("Bot Error", e); }
+    } catch (e) { 
+        console.error("Bot Error", e); 
+    } finally {
+        isBotThinking = false;
+        updateStatus();
+    }
 }
 
 function checkGameOver() {
     if (game.game_over()) {
         gameActive = false;
         clearInterval(timerInterval);
+        isBotThinking = false; // Sécurité
         
         let result = "1/2-1/2";
         if (game.in_checkmate()) {
             const winner = game.turn() === 'w' ? "Noirs" : "Blancs";
             result = winner === "Blancs" ? "1-0" : "0-1";
             
-            // Le Bot parle
             if ((userColor === 'white' && winner === 'Noirs') || (userColor === 'black' && winner === 'Blancs')) {
                 speak("win");
             } else {
                 speak("draw");
             }
+        } else if (game.in_draw() || game.in_stalemate() || game.in_threefold_repetition()) {
+             speak("draw");
         } else {
             speak("loss");
         }
@@ -202,8 +212,9 @@ let bubbleTimeout;
 function speak(category) {
     if (!botPhrases[category]) return;
 
+    // Moins de spam pour les coups normaux
     if (category !== 'intro' && category !== 'win' && category !== 'loss' && category !== 'timeout') {
-        if (Math.random() > 0.3) return; 
+        if (Math.random() > 0.4) return; 
     }
 
     const phrases = botPhrases[category];
@@ -213,7 +224,6 @@ function speak(category) {
     bubble.innerText = text;
     bubble.style.display = "block";
 
-    // Cacher après 4 secondes
     clearTimeout(bubbleTimeout);
     bubbleTimeout = setTimeout(() => {
         bubble.style.display = "none";
@@ -235,7 +245,6 @@ function endGame(action) {
 }
 
 async function saveGame(result) {
-    // Convertir le temps sélectionné en String pour l'API (ex: 300 -> "Blitz")
     let timeLabel = "Standard";
     if (selectedTime <= 120) timeLabel = "Bullet";
     else if (selectedTime <= 300) timeLabel = "Blitz";
@@ -253,7 +262,7 @@ async function saveGame(result) {
                 timeControl: timeLabel 
             })
         });
-        setTimeout(() => window.location.href = "dashboard.html", 2000);
+        setTimeout(() => window.location.href = "dashboard.html", 2500);
     } catch (e) { console.error(e); }
 }
 
@@ -263,6 +272,9 @@ function updateStatus() {
 
     if (game.in_check()) {
         status += moveColor + " sont en échec ! ";
+    }
+    if (game.game_over()) {
+        status = "Partie terminée.";
     }
     document.getElementById("status").innerText = status;
 }
