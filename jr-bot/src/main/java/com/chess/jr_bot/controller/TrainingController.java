@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.chess.jr_bot.entity.HistoricalMoveEntity;
+import com.chess.jr_bot.entity.MoveEntity;
 import com.chess.jr_bot.repository.HistoricalRepository;
 
 @RestController
@@ -20,9 +20,9 @@ public class TrainingController {
     }
 
     @GetMapping("/puzzle")
-    public ResponseEntity<HistoricalMoveEntity> getPuzzle(@RequestParam String type) {
+    public ResponseEntity<MoveEntity> getPuzzle(@RequestParam String type) {
         // type peut être : "opening", "endgame", "winning"
-        HistoricalMoveEntity puzzle = repository.findRandomPuzzle(type);
+        MoveEntity puzzle = repository.findRandomPuzzle(type);
         
         if (puzzle == null) {
             return ResponseEntity.notFound().build();

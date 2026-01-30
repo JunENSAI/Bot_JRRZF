@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.chess.jr_bot.dto.OpeningStats;
 import com.chess.jr_bot.entity.HistoricalGameEntity;
-import com.chess.jr_bot.entity.HistoricalMoveEntity;
+import com.chess.jr_bot.entity.MoveEntity;
 import com.chess.jr_bot.repository.HistoricalGameRepository;
 import com.chess.jr_bot.repository.HistoricalRepository;
 
@@ -73,7 +73,7 @@ public class HistoricalController {
     }
 
     @GetMapping("/game-moves")
-    public ResponseEntity<List<HistoricalMoveEntity>> getGameMoves(@RequestParam String gameId) {
+    public ResponseEntity<List<MoveEntity>> getGameMoves(@RequestParam String gameId) {
         return ResponseEntity.ok(repository.findByGameIdOrderByMoveNumberAsc(gameId));
     }
 

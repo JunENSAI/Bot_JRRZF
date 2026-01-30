@@ -7,11 +7,11 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.chess.jr_bot.dto.OpeningStats;
-import com.chess.jr_bot.entity.HistoricalMoveEntity;
+import com.chess.jr_bot.entity.MoveEntity;
 
-public interface HistoricalRepository extends JpaRepository<HistoricalMoveEntity, Long> {
+public interface HistoricalRepository extends JpaRepository<MoveEntity, Long> {
 
-  List<HistoricalMoveEntity> findByGameIdOrderByMoveNumberAsc(String gameId);
+  List<MoveEntity> findByGameIdOrderByMoveNumberAsc(String gameId);
 
     // Stats pour les Blancs (Move 1, Turn White)
     @Query(value = """
@@ -60,5 +60,5 @@ public interface HistoricalRepository extends JpaRepository<HistoricalMoveEntity
         ORDER BY RANDOM()
         LIMIT 1
     """, nativeQuery = true)
-    HistoricalMoveEntity findRandomPuzzle(@Param("type") String type);
+    MoveEntity findRandomPuzzle(@Param("type") String type);
 }
