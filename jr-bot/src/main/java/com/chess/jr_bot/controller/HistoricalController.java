@@ -19,7 +19,7 @@ import com.chess.jr_bot.dto.OpeningStats;
 import com.chess.jr_bot.entity.HistoricalGameEntity;
 import com.chess.jr_bot.entity.MoveEntity;
 import com.chess.jr_bot.repository.HistoricalGameRepository;
-import com.chess.jr_bot.repository.HistoricalRepository;
+import com.chess.jr_bot.repository.HistoricalMoveRepository;
 
 @RestController
 @RequestMapping("/api/historical")
@@ -28,10 +28,10 @@ public class HistoricalController {
     private static final Logger logger = LoggerFactory.getLogger(HistoricalController.class);
 
 
-    private final HistoricalRepository repository;
+    private final HistoricalMoveRepository repository;
     private final HistoricalGameRepository gameRepository;
 
-    public HistoricalController(HistoricalRepository repository, HistoricalGameRepository gameRepository) {
+    public HistoricalController(HistoricalMoveRepository repository, HistoricalGameRepository gameRepository) {
         this.repository = repository;
         this.gameRepository = gameRepository;
     }

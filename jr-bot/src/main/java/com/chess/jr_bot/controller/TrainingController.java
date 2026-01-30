@@ -7,15 +7,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.chess.jr_bot.entity.MoveEntity;
-import com.chess.jr_bot.repository.HistoricalRepository;
+import com.chess.jr_bot.repository.HistoricalMoveRepository;
 
 @RestController
 @RequestMapping("/api/training")
 public class TrainingController {
 
-    private final HistoricalRepository repository;
+    private final HistoricalMoveRepository repository;
 
-    public TrainingController(HistoricalRepository repository) {
+    public TrainingController(HistoricalMoveRepository repository) {
         this.repository = repository;
     }
 

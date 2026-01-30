@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import com.chess.jr_bot.entity.MoveEntity;
-import com.chess.jr_bot.repository.MoveRepository;
+import com.chess.jr_bot.repository.HistoricalMoveRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -27,7 +27,7 @@ public class BotService {
 
     private static final Logger logger = Logger.getLogger(BotService.class.getName());
 
-    private final MoveRepository moveRepository;
+    private final HistoricalMoveRepository HistoricalMoveRepository;
     private final RestTemplate restTemplate;
     private final Random random = new Random();
     
@@ -35,11 +35,11 @@ public class BotService {
 
     /**
      * Constructeur pour l'initialisation du service avec ses dépendances.
-     * * @param moveRepository Accès à la base de données des coups.
+     * * @param HistoricalMoveRepository Accès à la base de données des coups.
      * @param restTemplate Client HTTP pour interroger le service Python/Stockfish.
      */
-    public BotService(MoveRepository moveRepository, RestTemplate restTemplate) {
-        this.moveRepository = moveRepository;
+    public BotService(HistoricalMoveRepository HistoricalMoveRepository, RestTemplate restTemplate) {
+        this.HistoricalMoveRepository = HistoricalMoveRepository;
         this.restTemplate = restTemplate;
     }
 
@@ -58,7 +58,7 @@ public class BotService {
         String fenKey = currentFen.split(" ")[0];
         
         // 1. Recherche en memoire (Mon style)
-        List<MoveEntity> knownMoves = moveRepository.findByFenStartingWith(fenKey);
+        List<MoveEntity> knownMoves = HistoricalMoveRepository.findByFenStartingWith(fenKey);
 
         if (!knownMoves.isEmpty()) {
             MoveEntity memoryMove = knownMoves.get(random.nextInt(knownMoves.size()));
@@ -109,7 +109,7 @@ public class BotService {
     public String getOpeningMove() {
         String startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"; 
         
-        List<MoveEntity> openingMoves = moveRepository.findByFenStartingWith(startFen);
+        List<MoveEntity> openingMoves = HistoricalMoveRepository.findByFenStartingWith(startFen);
 
         if (openingMoves.isEmpty()) {
             return "d2d4"; 
