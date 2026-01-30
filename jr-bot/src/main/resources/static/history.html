@@ -4,28 +4,22 @@
     <meta charset="UTF-8">
     <title>Historique - JRRZF</title>
     <link rel="stylesheet" href="css/style.css">
-    <style>
-        table { width: 80%; margin: 20px auto; border-collapse: collapse; background: #3c3c3c; }
-        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #555; }
-        th { background: #444; color: #4caf50; }
-        tr:hover { background: #4a4a4a; }
-    </style>
 </head>
 <body>
-    <button onclick="window.location.href='dashboard.html'" style="position: absolute; top: 20px; left: 20px;">🔙 Retour</button>
+    <button class="back-button" onclick="window.location.href='dashboard.html'" style="position: absolute; top: 20px; left: 20px;">🔙 Retour</button>
     <h1>Historique des Parties</h1>
 
-    <table>
+    <table class="history-table">
         <thead>
-            <tr>
-                <th>Date</th>
-                <th>Blancs</th>
-                <th>Noirs</th>
-                <th>Résultat</th>
+            <tr class = "tr-history">
+                <th class ="th-history">Date</th>
+                <th class="th-history">Blancs</th>
+                <th class="th-history">Noirs</th>
+                <th class="th-history">Résultat</th>
             </tr>
         </thead>
         <tbody id="historyBody">
-            <tr><td colspan="4">Chargement...</td></tr>
+            <tr><td class="td-history" colspan="4">Chargement...</td></tr>
         </tbody>
     </table>
 
