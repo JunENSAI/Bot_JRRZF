@@ -21,6 +21,13 @@ import com.chess.jr_bot.dto.Stats;
 import com.chess.jr_bot.entity.GameEntity;
 import com.chess.jr_bot.repository.GameRepository;
 
+/**
+ * Contrôleur gérant les opérations liées aux parties sur la plateforme.
+ * <p>
+ * Assure la persistance des nouvelles parties, le calcul des statistiques 
+ * par catégorie de temps (Bullet, Blitz, Rapide) et la récupération de l'historique.
+ * </p>
+ */
 @RestController
 @RequestMapping("/api/platform")
 @CrossOrigin(origins = "*")
@@ -30,11 +37,23 @@ public class GameController {
 
     private final GameRepository gameRepository;
 
+    /**
+     * Initialise le contrôleur avec le repository des parties de la plateforme.
+     * * @param gameRepository Accès aux données de jeu.
+     */
     public GameController(GameRepository gameRepository) {
         this.gameRepository = gameRepository;
     }
 
-    // --- 1. SAUVEGARDE  ---
+    /**
+     * Enregistre une partie terminée en base de données.
+     * <p>
+     * Transforme le DTO {@link GameSave} en {@link GameEntity} et définit 
+     * automatiquement la date de jeu.
+     * </p>
+     * * @param request Données de la partie envoyées par le client.
+     * @return Réponse de confirmation ou message d'erreur interne.
+     */
     @PostMapping("/save")
     public ResponseEntity<?> saveGame(@RequestBody GameSave request) {
         try {
@@ -55,6 +74,18 @@ public class GameController {
         }
     }
 
+    /**
+     * Calcule et retourne les statistiques détaillées d'un utilisateur.
+     * <p>
+     * Analyse l'historique des parties pour classer les résultats par cadence :
+     * - Bullet (60-120s)
+     * - Blitz (180-300s)
+     * - Rapide (600-900s)
+     * - Daily (>=1440s)
+     * </p>
+     * * @param username Nom de l'utilisateur concerné.
+     * @return Une Map associant chaque catégorie à son objet {@link Stats}.
+     */
     @GetMapping("/stats")
     public ResponseEntity<?> getPlayerStats(@RequestParam String username) {
         List<GameEntity> games = gameRepository.findByWhitePlayerOrBlackPlayer(username, username);
@@ -100,12 +131,22 @@ public class GameController {
         return ResponseEntity.ok(statsMap);
     }
 
+    /**
+     * Récupère les 50 dernières parties d'un joueur pour l'affichage rapide.
+     * * @param username Nom de l'utilisateur.
+     * @return Liste ordonnée chronologiquement.
+     */
     @GetMapping("/history")
     public ResponseEntity<List<GameEntity>> getPlayerHistory(@RequestParam String username) {
         List<GameEntity> history = gameRepository.findTop50ByWhitePlayerOrBlackPlayerOrderByDatePlayedDesc(username, username);
         return ResponseEntity.ok(history);
     }
 
+    /**
+     * Récupère l'intégralité des parties d'un utilisateur.
+     * * @param username Nom de l'utilisateur.
+     * @return Liste complète des parties jouées.
+     */
     @GetMapping("/my-games")
     public ResponseEntity<List<GameEntity>> getMyGames(@RequestParam String username) {
         List<GameEntity> games = gameRepository.findByWhitePlayerOrBlackPlayerOrderByDatePlayedDesc(username, username);
