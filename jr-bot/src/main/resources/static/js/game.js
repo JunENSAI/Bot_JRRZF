@@ -68,14 +68,15 @@ function initBoard() {
     }
 }
 
-// --- 2. LOGIQUE DU TIMER (CORRIGÉE) ---
+// --- 2. LOGIQUE DU TIMER ---
 
 function startTimer() {
     if (timerInterval) clearInterval(timerInterval);
     
     timerInterval = setInterval(() => {
-        if (!gameActive || isBotThinking) return;
+        if (!gameActive) return;
 
+        // Décrémenter le temps du joueur dont c'est le tour
         if (game.turn() === 'w') {
             whiteTime--;
             if (whiteTime <= 0) timeOut('white');
@@ -85,6 +86,13 @@ function startTimer() {
         }
         updateClockDisplay();
     }, 1000);
+}
+
+function stopTimer() {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
 }
 
 function updateClockDisplay() {
@@ -107,7 +115,7 @@ function updateClockDisplay() {
 }
 
 function formatTime(seconds) {
-    if (seconds < 0) seconds = 0; // Sécurité visuelle
+    if (seconds < 0) seconds = 0;
     const m = Math.floor(seconds / 60).toString().padStart(2, '0');
     const s = (seconds % 60).toString().padStart(2, '0');
     return `${m}:${s}`;
@@ -115,7 +123,7 @@ function formatTime(seconds) {
 
 function timeOut(color) {
     gameActive = false;
-    clearInterval(timerInterval);
+    stopTimer();
     const loser = color === 'white' ? "Blancs" : "Noirs";
     alert(`Temps écoulé ! Les ${loser} ont perdu.`);
     speak("timeout");
@@ -127,7 +135,6 @@ function timeOut(color) {
 // --- 3. JEU & CHAT ---
 
 function onDragStart(source, piece) {
-    // On empêche de bouger si c'est fini OU SI LE BOT RÉFLÉCHIT (évite les bugs de clics spam)
     if (game.game_over() || !gameActive || isBotThinking) return false;
 
     if ((userColor === 'white' && piece.search(/^b/) !== -1) ||
@@ -144,7 +151,7 @@ function onDrop(source, target) {
     if (game.in_check()) speak("check");
 
     updateStatus();
-    // Le joueur a joué, c'est au tour du bot
+    
     makeBotMove();
 }
 
@@ -153,7 +160,6 @@ function onSnapEnd() { board.position(game.fen()); }
 async function makeBotMove() {
     if (game.game_over() || !gameActive) return checkGameOver();
 
-    // 1. On "gèle" le timer et le plateau
     isBotThinking = true; 
 
     try {
@@ -164,7 +170,6 @@ async function makeBotMove() {
 
         const botMove = await res.text();
         
-        // 2. On joue le coup
         game.move(botMove, { sloppy: true });
         board.position(game.fen());
         
@@ -176,14 +181,15 @@ async function makeBotMove() {
     } finally {
         isBotThinking = false;
         updateStatus();
+        
     }
 }
 
 function checkGameOver() {
     if (game.game_over()) {
         gameActive = false;
-        clearInterval(timerInterval);
-        isBotThinking = false; // Sécurité
+        stopTimer();
+        isBotThinking = false;
         
         let result = "1/2-1/2";
         if (game.in_checkmate()) {
@@ -240,7 +246,7 @@ function endGame(action) {
         speak("draw");
     }
     gameActive = false;
-    clearInterval(timerInterval);
+    stopTimer();
     saveGame(result);
 }
 
