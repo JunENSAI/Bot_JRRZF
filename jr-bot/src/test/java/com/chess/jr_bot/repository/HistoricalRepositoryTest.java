@@ -29,7 +29,7 @@ public class HistoricalRepositoryTest {
      * strictement supérieur à 200 centipions.</p>
      */
     @Test
-    void shouldFindWinningPuzzle() {
+    void TestFindWinningPuzzle() {
         createAndSaveMove("game1", 10, 300, "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1");
         createAndSaveMove("game1", 11, 10, "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1");
 
@@ -45,7 +45,7 @@ public class HistoricalRepositoryTest {
      * (caractères 'Q' ou 'q'), respectant ainsi la définition d'une finale.</p>
      */
     @Test
-    void shouldFindEndgamePuzzle() {
+    void TestFindEndgamePuzzle() {
         String endgameFen = "8/8/8/8/8/4k3/4P3/4K3 w - - 0 1"; 
         createAndSaveMove("game2", 40, 50, endgameFen);
 
@@ -62,7 +62,7 @@ public class HistoricalRepositoryTest {
      * bien dans la plage définie pour l'ouverture (entre le coup 3 et 15).</p>
      */
     @Test
-    void shouldFindOpeningPuzzle() {
+    void TestFindOpeningPuzzle() {
         createAndSaveMove("game3", 5, 20, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
         createAndSaveMove("game3", 20, 20, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
