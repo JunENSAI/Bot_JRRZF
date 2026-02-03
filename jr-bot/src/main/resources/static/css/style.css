@@ -489,6 +489,11 @@ body.training-mode {
     padding: 20px;
 }
 
+.hint-glow {
+    box-shadow: inset 0 0 20px rgba(255, 215, 0, 0.6), 0 0 10px 2px rgba(255, 215, 0, 0.8) !important;
+    border: 2px solid #ffd700 !important;
+}
+
 /* Le Plateau */
 #board {
     width: 480px !important;

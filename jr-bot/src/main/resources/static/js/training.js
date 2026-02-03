@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
 function setMode(mode) {
     currentMode = mode;
     document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-    event.target.classList.add('active');
+    if (event && event.target) event.target.classList.add('active');
     loadNewPuzzle();
 }
 
@@ -39,7 +39,7 @@ function initStockfish() {
 
             if (puzzleActive) {
                 bestMove = foundMove;
-                console.log("Solution attendue (Toi):", bestMove);
+                console.log("Solution attendue :", bestMove);
             } 
             else {
                 console.log("Réponse Ordi:", foundMove);
@@ -53,6 +53,7 @@ function initStockfish() {
 async function loadNewPuzzle() {
     updateFeedback("Chargement...", "");
     puzzleActive = false;
+    bestMove = null
     moveSequenceCount = 0;
 
     try {
@@ -78,6 +79,22 @@ async function loadNewPuzzle() {
         updateFeedback("Erreur chargement.", "error");
     }
 }
+
+function showHint() {
+    if (!bestMove) {
+        console.log("Attends que l'ordi calcule le meilleur coup...");
+        return;
+    }
+    
+    let sourceSquare = bestMove.substring(0, 2);
+    let $square = $('.square-' + sourceSquare);
+    $square.addClass('hint-glow');
+    
+    setTimeout(() => {
+        $square.removeClass('hint-glow');
+    }, 2000);
+}
+
 
 function askStockfishForBestMove() {
     stockfish.postMessage("stop");
@@ -121,14 +138,14 @@ function handleCorrectMove() {
     board.position(game.fen());
     
     if (game.in_checkmate()) {
-        puzzleSuccess("✨ ECHEC ET MAT ! Bien joué !");
+        puzzleSuccess(" ECHEC ET MAT ! Bien joué !");
         return;
     }
     
     let maxMoves = (currentMode === 'endgame') ? 4 : 2;
 
     if (moveSequenceCount >= maxMoves) {
-        puzzleSuccess("✅ Excellent calcul ! Séquence terminée.");
+        puzzleSuccess(" Excellent calcul ! Séquence terminée.");
     } else {
         puzzleActive = false;
         updateFeedback("Bien joué ! L'adversaire répond...", "success");
