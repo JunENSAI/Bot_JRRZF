@@ -45,7 +45,7 @@ public class TrainingControllerTest {
      * Valide le retour d'un puzzle avec un code 200 lorsqu'une position correspondante existe.
      */
     @Test
-    void retournePuzzleSiPositionExistante() throws Exception {
+    void shouldReturnPuzzle_WhenFound() throws Exception {
         MoveEntity puzzle = new MoveEntity();
         puzzle.setGameId("game_test_1");
         puzzle.setFen("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1");
@@ -68,7 +68,7 @@ public class TrainingControllerTest {
      * ou qu'aucune position ne correspond au type demandé.
      */
     @Test
-    void retourneErreur404SiAucunPuzzleTrouve() throws Exception {
+    void shouldReturn404_WhenNoPuzzleFound() throws Exception {
         mockMvc.perform(get("/api/training/puzzle")
                 .param("type", "winning"))
                 .andExpect(status().isNotFound());

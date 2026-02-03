@@ -73,4 +73,17 @@ public class MoveEntity {
      */
     @Column(name = "eval_score")
     private Integer evalScore;
+
+    /**
+     * Détermine si le coup effectué est une promotion de pion.
+     * <p>
+     * En notation UCI, un coup standard comporte 4 caractères (ex: "e2e4").
+     * Une promotion en comporte 5, le dernier caractère indiquant la pièce
+     * de promotion (q, r, b, n).
+     * </p>
+     * * @return true si le coup est une promotion, false sinon.
+     */
+    public boolean isPromotion() {
+    return this.playedMove != null && this.playedMove.length() == 5;
+    }
 }
