@@ -1,0 +1,42 @@
+pipeline {
+    agent any
+
+    tools {
+        maven 'maven' 
+        jdk 'jdk21'
+    }
+
+    stages {
+        stage('Compilation') {
+            steps {
+                sh 'mvn clean compile -B'
+            }
+        }
+
+        stage('tests') {
+            steps {
+                echo '=== Lancement des Tests ==='
+                sh 'mvn test -B'
+            }
+        }
+
+        stage('build') {
+            steps {
+                echo '=== Création du fichier JAR ==='
+                sh 'mvn package -DskipTests -B'
+            }
+        }
+    }
+
+    post {
+        always {
+            junit '**/target/surefire-reports/*.xml'
+        }
+        success {
+            echo 'SUCCÈS : Le bot est compilé, testé et prêt à être déployé !'
+        }
+        failure {
+            echo ' ÉCHEC : Un test a planté. Pas de JAR généré. Corrige ton code !'
+        }
+    }
+}
