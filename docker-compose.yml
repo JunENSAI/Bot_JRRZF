@@ -1,0 +1,51 @@
+services:
+  # --- 1. Base de Données PostgreSQL ---
+  postgres_db:
+    image: postgres:15-alpine
+    container_name: chess_postgres
+    environment:
+      POSTGRES_DB: chess_bot
+      POSTGRES_USER: junior
+      POSTGRES_PASSWORD: fish_bot1800
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data 
+
+  # --- 2. Backend Java (Spring Boot) ---
+  jr-bot:
+    build: ./jr-bot
+    container_name: chess_backend
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres_db:5432/chess_bot
+      SPRING_DATASOURCE_USERNAME: junior
+      SPRING_DATASOURCE_PASSWORD: fish_bot1800
+      SPRING_PROFILES_ACTIVE: default
+    depends_on:
+      - postgres_db
+    networks:
+      - chess-network
+
+  # --- 3. Module IA Python ---
+  ai-engine:
+    build: ./python_files
+    container_name: chess_ai
+    environment:
+      BACKEND_URL: http://jr-bot:8082/api
+      DB_HOST: postgres_db
+      DB_USER: jr_bot
+      DB_PASS: fish_bot1800
+    depends_on:
+      - jr-bot
+      - postgres_db
+    networks:
+      - chess-network
+
+volumes:
+  postgres_data:
+
+networks:
+  chess-network:
+    driver: bridge
