@@ -8,6 +8,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Data;
 
+import com.chess.jr_bot.entity.MoveClassification;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+
 /**
  * Représente un coup enregistré dans la base de données.
  * <p>
@@ -85,5 +89,17 @@ public class MoveEntity {
      */
     public boolean isPromotion() {
     return this.playedMove != null && this.playedMove.length() == 5;
+    }
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "classification")
+    private MoveClassification classification;
+
+    public MoveClassification getClassification() {
+        return classification;
+    }
+
+    public void setClassification(MoveClassification classification) {
+        this.classification = classification;
     }
 }
