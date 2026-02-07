@@ -270,6 +270,68 @@ th {color: #888;
     min-width: 300px;
 }
 
+.btn-analyze-icon {
+    background-color: #27ae60; /* Vert */
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    font-size: 18px; /* Icône un peu plus grosse */
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 0 5px; /* Un peu d'espace autour */
+    transition: transform 0.1s, background-color 0.2s;
+}
+
+.btn-analyze-icon:hover {
+    background-color: #2ecc71; /* Vert plus clair au survol */
+    transform: scale(1.05); /* Petit effet de zoom sympa */
+}
+
+.btn-analyze-icon:active {
+    transform: scale(0.95); /* Effet d'enfoncement au clic */
+}
+
+.analysis-sidebar {
+    width: 300px;
+    background: #262421;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.review-summary {
+    background: #333;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    display: flex;
+    justify-content: space-around;
+}
+
+.accuracy-box { text-align: center; color: white; }
+.accuracy-score { font-size: 24px; font-weight: bold; display: block; }
+
+/* Liste des coups (Scrollable) */
+.moves-container {
+    flex-grow: 1; 
+    overflow-y: auto;
+    background: #302e2b;
+    padding: 5px;
+}
+
+/* Lignes des coups (gérées par le JS) */
+.move-row {
+    display: flex;
+    padding: 2px 5px;
+    border-bottom: 1px solid #444;
+    cursor: pointer;
+}
+.move-row:hover { background: #444; }
+.move-num { width: 30px; color: #888; }
+.move-item { flex: 1; color: #ccc; display: flex; align-items: center; }
+.active-move { background-color: #f1c40f44; color: #fff; font-weight: bold; }
+
 .sidebar::-webkit-scrollbar { width: 8px; }
 .sidebar::-webkit-scrollbar-track { background: #333; }
 .sidebar::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }

@@ -45,11 +45,35 @@
             <div class="controls">
                 <button class="btn-secondary" onclick="firstMove()">⏮</button>
                 <button class="btn-secondary" onclick="prevMove()">◀</button>
-                <button class="btn-secondary" onclick="nextMove()">▶</button>
+                <button class="btn-secondary" onclick="toggleAutoPlay()" id="btn-play">▶</button> <button class="btn-secondary" onclick="nextMove()">▶</button>
                 <button class="btn-secondary" onclick="lastMove()">⏭</button>
                 <button class="btn-primary" onclick="flipBoard()">🔄</button>
+                <button id="btn-analyze" onclick="triggerGameReview()" class="btn-analyze">
+                🔍 Bilan
+            </button>
             </div>
         </div>
+
+        <div class="analysis-sidebar">
+
+            <div id="review-summary" class="review-summary" style="display: none;">
+                <div class="accuracy-box">
+                    <span id="white-accuracy" class="accuracy-score">-</span>
+                    <small>Blancs</small>
+                </div>
+                <div class="accuracy-box">
+                    <span id="black-accuracy" class="accuracy-score">-</span>
+                    <small>Noirs</small>
+                </div>
+            </div>
+
+            <div class="moves-container">
+                <h3>Coups</h3>
+                <div id="moves-list" class="moves-list">
+                    </div>
+            </div>
+        </div>
+
     </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>

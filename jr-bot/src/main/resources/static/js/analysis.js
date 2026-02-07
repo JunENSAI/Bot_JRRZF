@@ -5,11 +5,18 @@ let currentMoveIndex = -1;
 let stockfish = null;
 let currentPage = 0;
 let currentSearch = "";
+let activeGameId = null;
 
 document.addEventListener("DOMContentLoaded", () => {
     initBoard();
     initStockfish();
     loadGamesList();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlId = urlParams.get('id');
+    if(urlId) {
+        activeGameId = urlId;
+    }
 
     document.getElementById("opponent-search").addEventListener("keypress", function(event) {
         if (event.key === "Enter") searchOpponent();
@@ -133,6 +140,12 @@ function parseStockfishScore(line) {
 
 async function loadGame(g) {
     document.getElementById("game-title").innerText = `${g.whitePlayer} vs ${g.blackPlayer}`;
+
+    activeGameId = g.gameId; 
+
+    $('#review-summary').hide(); 
+    $('#btn-analyze').show().text("🔍 Lancer le Bilan").prop('disabled', false);
+
     try {
         const res = await fetch(`/api/historical/game-moves?gameId=${g.gameId}`);
         dbMovesData = await res.json();
@@ -154,6 +167,108 @@ function lastMove() { currentMoveIndex = dbMovesData.length - 1; updateUI(); }
 function firstMove() { currentMoveIndex = -1; updateUI(); }
 function flipBoard() { board.flip(); updateUI(); }
 
+function createMoveHtml(move, index) {
+    if (!move) return '';
+
+    let iconHtml = '';
+    if (move.classification) {
+        let iconName = move.classification.toLowerCase() + ".png";
+        iconHtml = `<img src="/images/${iconName}" class="move-classification-icon" style="height:16px; margin-left:4px;" title="${move.classification}">`;
+    }
+
+    const activeClass = (index === currentMoveIndex) ? 'active-move' : '';
+
+    return `<span class="move-item ${activeClass}" onclick="jumpToMove(${index})" style="cursor:pointer; padding:2px 5px;">
+                ${move.playedMove} ${iconHtml}
+            </span>`;
+}
+
+/**
+ * Fonction principale qui dessine toute la liste (1. e4 e5 ...)
+ */
+function updateMoveList() {
+    const listContainer = document.getElementById('moves-list');
+    if (!listContainer) return;
+    
+    if (!dbMovesData || dbMovesData.length === 0) {
+        listContainer.innerHTML = '';
+        return;
+    }
+
+    let html = '';
+    for (let i = 0; i < dbMovesData.length; i += 2) {
+        const moveWhite = dbMovesData[i];
+        const moveBlack = dbMovesData[i+1];
+        const moveNum = Math.floor(i / 2) + 1;
+
+        html += `
+            <div class="move-row" style="display:flex; border-bottom:1px solid #444; padding:3px;">
+                <span class="move-num" style="width:30px; color:#888;">${moveNum}.</span>
+                <div style="flex:1;">${createMoveHtml(moveWhite, i)}</div>
+                <div style="flex:1;">${createMoveHtml(moveBlack, i+1)}</div>
+            </div>
+        `;
+    }
+    listContainer.innerHTML = html;
+}
+
+async function triggerGameReview() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const gameId = activeGameId || urlParams.get('id');
+
+    if (!gameId) {
+        alert("Veuillez sélectionner une partie d'abord !");
+        return;
+    }
+
+    const btn = $('#btn-analyze');
+    btn.text("Analyse en cours...").prop('disabled', true);
+
+    try {
+        const response = await fetch(`/api/analysis/review/${gameId}`);
+        if (!response.ok) throw new Error("Erreur lors de l'analyse backend");
+
+        const data = await response.json(); 
+        console.log("Réponse du serveur :", data); 
+
+
+        if (data.moves) {
+            dbMovesData = data.moves;
+        } else if (Array.isArray(data)) {
+            console.warn("Le backend AnalysisController n'est pas à jour !");
+            dbMovesData = data; 
+        }
+        let rawAccW = data.whiteAccuracy;
+        let rawAccB = data.blackAccuracy;
+
+        if (rawAccW === undefined || rawAccW === null) rawAccW = 0;
+        if (rawAccB === undefined || rawAccB === null) rawAccB = 0;
+
+        const accW = Number(rawAccW).toFixed(1); // "94.1"
+        const accB = Number(rawAccB).toFixed(1); // "88.0"
+
+        $('#white-accuracy').text(accW + '%').css('color', getColorForAccuracy(rawAccW));
+        $('#black-accuracy').text(rawAccB > 0 ? accB + '%' : '-').css('color', getColorForAccuracy(rawAccB));
+
+        updateMoveList(); 
+
+        btn.hide();
+        $('#review-summary').fadeIn();
+
+    } catch (e) {
+        console.error(e);
+        alert("Erreur: " + e.message);
+        btn.text("Réessayer").prop('disabled', false);
+    }
+}
+
+function getColorForAccuracy(score) {
+    if (score >= 90) return '#2ecc71';
+    if (score >= 80) return '#27ae60';
+    if (score >= 70) return '#f1c40f';
+    return '#e74c3c';
+}
+
 function updateUI() {
     if (currentMoveIndex === -1) {
         game.reset();
@@ -162,6 +277,7 @@ function updateUI() {
         document.getElementById("best-move-display").innerText = "Stockfish: Prêt";
         $('.square-55d63').removeClass('highlight-move');
         $('.square-55d63').removeClass('highlight-best');
+        updateMoveList();
         return;
     }
 
@@ -184,7 +300,14 @@ function updateUI() {
             document.getElementById("best-move-display").innerText = "Calcul...";
             stockfish.postMessage("stop");
             stockfish.postMessage(`position fen ${moveData.fen}`);
-            stockfish.postMessage("go depth 15");
+            stockfish.postMessage("go depth 25");
         }
     }
+
+    updateMoveList();
+}
+
+function jumpToMove(index) {
+    currentMoveIndex = index;
+    updateUI();
 }

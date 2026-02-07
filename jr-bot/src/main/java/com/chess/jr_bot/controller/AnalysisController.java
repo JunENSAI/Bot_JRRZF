@@ -8,13 +8,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
- * Contrôleur responsable de l'analyse post-partie et de la revue de jeu.
+ * Contrôleur avancé pour l'analyse et la revue de parties.
  * <p>
- * Ce composant calcule la qualité des coups joués en comparant l'évolution 
- * du score d'évaluation entre chaque tour.
+ * Ce composant orchestre la classification individuelle des coups, la détection 
+ * des coups théoriques (Book moves) et le calcul du score de précision (Accuracy)
+ * pour les deux camps.
  * </p>
  */
 @RestController
@@ -28,36 +32,47 @@ public class AnalysisController {
     private GameReviewService reviewService;
 
     /**
-     * Effectue une révision complète d'une partie et classifie chaque coup.
+     * Effectue une revue exhaustive de la partie et génère un rapport de précision.
      * <p>
-     * Le processus compare le score actuel au score précédent du point de vue 
-     * du joueur dont c'est le tour. Il identifie également si le coup joué 
-     * correspond à la suggestion optimale du moteur Stockfish.
+     * Le processus inclut :
+     * 1. La normalisation des scores selon le trait (Blanc ou Noir).
+     * 2. Le nettoyage des suggestions Stockfish (gestion du ponder).
+     * 3. La classification de chaque coup via le GameReviewService.
+     * 4. Le calcul d'un score de précision global sur 100 pour chaque joueur.
      * </p>
-     * * @param gameId Identifiant unique de la partie à analyser.
-     * @return Liste des coups mis à jour avec leur classification (Great, Blunder, etc.).
+     * * @param gameId L'identifiant de la partie à analyser.
+     * @return Une Map contenant les précisions respectives et la liste des coups classifiés.
      */
     @GetMapping("/review/{gameId}")
-    public ResponseEntity<List<MoveEntity>> reviewGame(@PathVariable String gameId) {
+    public ResponseEntity<Map<String, Object>> reviewGame(@PathVariable String gameId) {
+        
         List<MoveEntity> moves = moveRepository.findByGameIdOrderByMoveNumberAsc(gameId);
 
         if (moves.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
-        // Score initial standard : +20 centipions (avantage Blancs par défaut au coup 1)
         double previousScore = 20.0; 
+        
+        List<MoveClassification> whiteMovesClassif = new ArrayList<>();
+        List<MoveClassification> blackMovesClassif = new ArrayList<>();
 
         for (MoveEntity move : moves) {
-            if (move.getEvalScore() == null) continue;
+            
+            if (move.getEvalScore() == null) {
+                MoveClassification bookCheck = reviewService.classifyMove(0, 0, false, move.getFen());
+                if (bookCheck == MoveClassification.BOOK) {
+                    move.setClassification(MoveClassification.BOOK);
+                }
+                continue; 
+            }
 
             double currentScore = move.getEvalScore();
             boolean isWhiteTurn = "w".equalsIgnoreCase(move.getTurn()) || "White".equalsIgnoreCase(move.getTurn());
-            
+
             double scoreForPlayer_Prev;
             double scoreForPlayer_Curr;
 
-            // Inversion du score pour l'analyse relative au joueur
             if (isWhiteTurn) {
                 scoreForPlayer_Prev = previousScore;
                 scoreForPlayer_Curr = currentScore;
@@ -66,12 +81,17 @@ public class AnalysisController {
                 scoreForPlayer_Curr = -currentScore;
             }
 
-            // Vérification si le coup joué correspond au meilleur coup suggéré
-            boolean isBestMove = move.getStockfishBestMove() != null &&
-                                 move.getPlayedMove() != null &&
-                                 move.getStockfishBestMove().trim().startsWith(move.getPlayedMove().trim());
+            String played = move.getPlayedMove();
+            String best = move.getStockfishBestMove();
+            boolean isBestMove = false;
 
-            // Appel au service de classification pour déterminer la qualité du coup
+            if (played != null && best != null) {
+                String cleanPlayed = played.trim().toLowerCase();
+                String cleanBest = best.trim().toLowerCase();
+                if (cleanBest.contains(" ")) cleanBest = cleanBest.split(" ")[0]; 
+                isBestMove = cleanPlayed.equals(cleanBest);
+            }
+
             MoveClassification classification = reviewService.classifyMove(
                     scoreForPlayer_Prev, 
                     scoreForPlayer_Curr, 
@@ -80,11 +100,26 @@ public class AnalysisController {
             );
 
             move.setClassification(classification);
+
+            if (isWhiteTurn) {
+                whiteMovesClassif.add(classification);
+            } else {
+                blackMovesClassif.add(classification);
+            }
+
             previousScore = currentScore;
         }
 
+        double whiteAcc = reviewService.calculateGameAccuracy(whiteMovesClassif);
+        double blackAcc = reviewService.calculateGameAccuracy(blackMovesClassif);
+
         moveRepository.saveAll(moves);
 
-        return ResponseEntity.ok(moves);
+        Map<String, Object> response = new HashMap<>();
+        response.put("whiteAccuracy", whiteAcc);
+        response.put("blackAccuracy", blackAcc);
+        response.put("moves", moves);
+
+        return ResponseEntity.ok(response);
     }
 }
