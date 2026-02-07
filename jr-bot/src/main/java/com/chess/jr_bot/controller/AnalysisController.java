@@ -75,7 +75,8 @@ public class AnalysisController {
             MoveClassification classification = reviewService.classifyMove(
                     scoreForPlayer_Prev, 
                     scoreForPlayer_Curr, 
-                    isBestMove
+                    isBestMove,
+                    move.getFen()
             );
 
             move.setClassification(classification);

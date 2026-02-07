@@ -1,10 +1,15 @@
 package com.chess.jr_bot.service;
 
 import com.chess.jr_bot.entity.MoveClassification;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class GameReviewService {
+
+    @Autowired
+    private OpeningService openingService;
 
     /**
      * Calcule la classification d'un coup basé sur l'évaluation avant et après le coup.
@@ -14,7 +19,12 @@ public class GameReviewService {
      * @param isBestMove Si Stockfish dit que c'était le meilleur coup absolu.
      * @return La classification (Blunder, Great, Best, etc.)
      */
-    public MoveClassification classifyMove(double prevCp, double currentCp, boolean isBestMove) {
+    public MoveClassification classifyMove(double prevCp, double currentCp, boolean isBestMove, String resultingFen) {
+
+        if (openingService.isBookMove(resultingFen)) {
+            return MoveClassification.BOOK;
+        }
+
         if (isBestMove) {
             return MoveClassification.BEST; 
         }
