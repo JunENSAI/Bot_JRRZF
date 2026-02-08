@@ -26,6 +26,22 @@ public interface HistoricalMoveRepository extends JpaRepository<MoveEntity, Long
     List<MoveEntity> findByFen(String fen);
 
     /**
+     * Filtre les coups par leur rang dans la partie et le mouvement effectué.
+     * @param moveNumber Le numéro du coup (ex: 1 pour le premier coup).
+     * @param playedMove Le coup en notation UCI (ex: "e2e4").
+     * @return Liste des coups correspondants.
+     */
+    List<MoveEntity> findByMoveNumberAndPlayedMove(Integer moveNumber, String playedMove);
+
+    /**
+     * Récupère un coup spécifique au sein d'une partie donnée.
+     * @param gameId L'identifiant unique de la partie.
+     * @param moveNumber Le numéro du coup recherché.
+     * @return L'entité {@link MoveEntity} correspondante.
+     */
+    MoveEntity findByGameIdAndMoveNumber(String gameId, Integer moveNumber);
+
+    /**
      * Recherche des coups en ignorant les compteurs de fin de FEN.
      * * @param fenPart La partie initiale du FEN (disposition des pièces).
      * @return Liste des coups correspondant à la structure du plateau.

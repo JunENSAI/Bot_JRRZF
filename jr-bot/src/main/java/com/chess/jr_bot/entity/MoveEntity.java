@@ -78,6 +78,9 @@ public class MoveEntity {
     @Column(name = "eval_score")
     private Integer evalScore;
 
+    @Column(name = "second_best_eval")
+    private Integer secondBestEval;
+
     /**
      * Détermine si le coup effectué est une promotion de pion.
      * <p>
@@ -101,5 +104,13 @@ public class MoveEntity {
 
     public void setClassification(MoveClassification classification) {
         this.classification = classification;
+    }
+
+    public Integer getSecondBestEval() { 
+        return secondBestEval;
+    }
+
+    public void setSecondBestEval(Integer secondBestEval) {
+        this.secondBestEval = secondBestEval;
     }
 }

@@ -8,11 +8,12 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * Service d'analyse qualitative des coups et de calcul de performance.
+ * Service d'analyse expert pour la classification des coups d'échecs.
  * <p>
- * Ce service utilise des modèles mathématiques quadratiques pour définir des
- * seuils de perte (centipions) dynamiques, permettant de classifier la qualité
- * des coups selon le contexte de la partie.
+ * Ce service implémente une logique de révision profonde incluant :
+ * - La détection des opportunités de mat manquées.
+ * - L'identification des coups forcés (quand le deuxième meilleur coup est nettement inférieur).
+ * - La revalorisation des coups ("Great Move") après une gaffe adverse.
  * </p>
  */
 @Service
@@ -22,75 +23,107 @@ public class GameReviewService {
     private OpeningService openingService;
 
     /**
-     * Classifie un coup en fonction de la perte d'avantage (loss) subie.
-     * <p>
-     * L'algorithme applique une logique de seuils dynamiques. Plus la position est 
-     * déséquilibrée (eval élevée), plus le moteur est "tolérant" envers une perte 
-     * de points, car l'issue de la partie est déjà presque décidée.
-     * </p>
-     * * @param prevEval      Évaluation avant le coup (du point de vue du joueur).
-     * @param currentEval   Évaluation après le coup (du point de vue du joueur).
-     * @param isBestMove    Indique si le coup correspond à la suggestion Stockfish.
-     * @param resultingFen  Position résultante pour la vérification théorique.
-     * @return La {@link MoveClassification} correspondante.
+     * Algorithme de classification multicritères (Mat, Centipions, Contexte).
+     * * @param prevEval        Évaluation avant le coup (en centipions).
+     * @param currentEval     Évaluation après le coup.
+     * @param secondBestEval  Évaluation du deuxième meilleur coup suggéré (pour détecter les coups forcés).
+     * @param isBestMove      Le coup joué est-il le premier choix de l'IA ?
+     * @param resultingFen    FEN après le coup pour la détection théorique.
+     * @param lastClassif     Classification du coup précédent (pour détecter les "Great Moves").
+     * @return La {@link MoveClassification} la plus appropriée.
      */
-    public MoveClassification classifyMove(double prevEval, double currentEval, boolean isBestMove, String resultingFen) {
-        
-        // Priorité 1 : Coup théorique
-        if (openingService.isBookMove(resultingFen)) {
-            return MoveClassification.BOOK;
+    public MoveClassification classifyMove(double prevEval, double currentEval, Double secondBestEval,
+                                           boolean isBestMove, String resultingFen, MoveClassification lastClassif) {
+
+        // 1. Priorité absolue : Théorie (Book)
+        if (openingService.isBookMove(resultingFen)) return MoveClassification.BOOK;
+
+        // 2. Gestion des séquences de Mat
+        boolean prevIsMate = Math.abs(prevEval) > 9000;
+        boolean currIsMate = Math.abs(currentEval) > 9000;
+
+        if (prevIsMate && !currIsMate) {
+            // Mat raté (Blunder ou Mistake selon la perte d'avantage restante)
+            if (prevEval > 0 && currentEval > 0) {
+                 if (currentEval < 500) return MoveClassification.BLUNDER;
+                 return MoveClassification.MISTAKE;
+            }
+            return MoveClassification.BLUNDER;
         }
 
-        // Limitation de l'analyse aux bornes de [-10.0, +10.0] pions
+        if (prevIsMate && currIsMate) {
+            // Mat maintenu ou accéléré
+            if (currentEval >= prevEval) return MoveClassification.BEST; 
+            return MoveClassification.GOOD;
+        }
+
+        // 3. Logique de perte de centipions (clamping à +/- 10.0 pions)
         double clampedPrev = Math.max(-1000, Math.min(1000, prevEval));
         double clampedCurr = Math.max(-1000, Math.min(1000, currentEval));
+        double loss = Math.max(0, clampedPrev - clampedCurr);
 
-        // Calcul de la perte d'avantage (une perte positive signifie une erreur)
-        double loss = clampedPrev - clampedCurr;
-        if (loss < 0) loss = 0;
-
-        // Priorité 2 : Coup optimal
-        if (isBestMove) {
-            return MoveClassification.BEST;
+        // 4. Détection des coups forcés
+        if (secondBestEval != null) {
+            double diffWithSecond = prevEval - secondBestEval;
+            if (isBestMove && diffWithSecond > 200) return MoveClassification.FORCED;
         }
 
-        double absPrevEval = Math.abs(clampedPrev);
+        // 5. Classification standard via seuils quadratiques
+        MoveClassification classification = MoveClassification.BLUNDER;
+        if (isBestMove) {
+            classification = MoveClassification.BEST;
+        } else {
+            if (loss <= getThreshold(MoveClassification.BEST, clampedPrev)) classification = MoveClassification.BEST;
+            else if (loss <= getThreshold(MoveClassification.EXCELLENT, clampedPrev)) classification = MoveClassification.EXCELLENT;
+            else if (loss <= getThreshold(MoveClassification.GOOD, clampedPrev)) classification = MoveClassification.GOOD;
+            else if (loss <= getThreshold(MoveClassification.INACCURACY, clampedPrev)) classification = MoveClassification.INACCURACY;
+            else if (loss <= getThreshold(MoveClassification.MISTAKE, clampedPrev)) classification = MoveClassification.MISTAKE;
+        }
 
-        // Algorithme de seuils dynamiques (Modèle quadratique)
-        // Les constantes permettent d'ajuster la sévérité de l'analyse
-        double thresholdExcellent = 0.0002 * Math.pow(absPrevEval, 2) + 0.1231 * absPrevEval + 27.5455;
-        double thresholdGood      = 0.0002 * Math.pow(absPrevEval, 2) + 0.2643 * absPrevEval + 60.5455;
-        double thresholdInaccuracy= 0.0002 * Math.pow(absPrevEval, 2) + 0.3624 * absPrevEval + 108.0909;
-        double thresholdMistake   = 0.0002 * Math.pow(absPrevEval, 2) + 0.4027 * absPrevEval + 225.8182;
+        // 6. Logique "Great Move" (Super coup)
+        // Se déclenche si on trouve un coup fort après une erreur adverse ou dans une position tendue
+        if (classification == MoveClassification.BEST || classification == MoveClassification.EXCELLENT) {
+             boolean noMate = Math.abs(currentEval) < 2000;
+             if (noMate 
+                 && lastClassif == MoveClassification.BLUNDER 
+                 && secondBestEval != null
+                 && (prevEval - secondBestEval) >= 150) {
+                 return MoveClassification.GREAT;
+             }
+        }
 
-        if (loss <= thresholdExcellent) return MoveClassification.EXCELLENT;
-        if (loss <= thresholdGood)      return MoveClassification.GOOD;
-        if (loss <= thresholdInaccuracy)return MoveClassification.INACCURACY;
-        if (loss <= thresholdMistake)   return MoveClassification.MISTAKE;
+        // 7. Sécurité pour les positions déjà décisives (+/- 6.0 pions)
+        // On ne classifie pas comme gaffe un coup qui maintient un avantage gagnant
+        if (classification == MoveClassification.BLUNDER && currentEval >= 600) return MoveClassification.GOOD;
+        if (classification == MoveClassification.BLUNDER && prevEval <= -600) return MoveClassification.GOOD;
 
-        return MoveClassification.BLUNDER;
+        return classification;
     }
 
     /**
-     * Calcule la précision globale d'une partie (Weighted Accuracy).
-     * <p>
-     * Utilise les coefficients définis dans l'énumération {@link MoveClassification}
-     * pour produire une note sur 100 reflétant la qualité globale du jeu.
-     * </p>
-     * * @param classifications Liste des classifications de la partie.
-     * @return Score de précision (0.0 à 100.0).
+     * Calcule le seuil de tolérance dynamique selon la phase de jeu.
+     */
+    private double getThreshold(MoveClassification expected, double prevEval) {
+        double absEval = Math.abs(prevEval);
+        switch (expected) {
+            case BEST: return 0.0001 * Math.pow(absEval, 2) + (0.0236 * absEval) - 3.7143;
+            case EXCELLENT: return 0.0002 * Math.pow(absEval, 2) + 0.1231 * absEval + 27.5455;
+            case GOOD: return 0.0002 * Math.pow(absEval, 2) + 0.2643 * absEval + 60.5455;
+            case INACCURACY: return 0.0002 * Math.pow(absEval, 2) + 0.3624 * absEval + 108.0909;
+            case MISTAKE: return 0.0003 * Math.pow(absEval, 2) + 0.4027 * absEval + 225.8182;
+            default: return 0.0;
+        }
+    }
+
+    /**
+     * Calcul de la précision moyenne de la partie.
      */
     public double calculateGameAccuracy(List<MoveClassification> classifications) {
         if (classifications.isEmpty()) return 0.0;
-
         double totalScore = 0.0;
-        double count = 0.0;
-
         for (MoveClassification cls : classifications) {
             totalScore += cls.getAccuracyScore() * 100;
-            count++;
         }
-
-        return totalScore / count;
+        return totalScore / classifications.size();
     }
 }
