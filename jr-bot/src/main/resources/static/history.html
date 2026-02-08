@@ -4,25 +4,83 @@
     <meta charset="UTF-8">
     <title>Historique - JRRZF</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+    
+    <style>
+        /* Petits ajustements pour que ça rentre bien */
+        .move-row { cursor: pointer; padding: 2px 5px; display: flex; justify-content: space-between; border-bottom: 1px solid #444; }
+        .move-row:hover { background-color: #444; }
+        .move-row.active { background-color: #3e8e41; color: white; }
+        .classification-icon { width: 15px; height: 15px; display: inline-block; margin-left: 5px; }
+        
+        /* Couleurs des classifications */
+        .classif-BRILLIANT { color: #1baca6; font-weight: bold; }
+        .classif-GREAT { color: #5c8bb0; font-weight: bold; }
+        .classif-BEST { color: #96bc4b; }
+        .classif-EXCELLENT { color: #96bc4b; }
+        .classif-GOOD { color: #96bc4b; opacity: 0.8; }
+        .classif-INACCURACY { color: #f0c15c; }
+        .classif-MISTAKE { color: #e6912c; }
+        .classif-BLUNDER { color: #b33430; font-weight: bold; }
+        .classif-BOOK { color: #a88865; }
+    </style>
 </head>
 <body>
-    <button class="back-button" onclick="window.location.href='dashboard.html'" style="position: absolute; top: 20px; left: 20px;">🔙 Retour</button>
-    <h1>Historique des Parties</h1>
+    <div style="display:flex; align-items:center; padding: 15px; background:#2c3e50; color:white;">
+        <button class="back-button" onclick="window.location.href='dashboard.html'" style="margin-right:20px; padding: 8px 15px; cursor:pointer;">🔙 Retour</button>
+        <h1 style="margin:0;">Historique des Parties</h1>
+    </div>
 
-    <table class="history-table">
-        <thead>
-            <tr class = "tr-history">
-                <th class ="th-history">Date</th>
-                <th class="th-history">Blancs</th>
-                <th class="th-history">Noirs</th>
-                <th class="th-history">Résultat</th>
-            </tr>
-        </thead>
-        <tbody id="historyBody">
-            <tr><td class="td-history" colspan="4">Chargement...</td></tr>
-        </tbody>
-    </table>
+    <div class="main-container" style="display:flex; height: calc(100vh - 80px);">
+        
+        <div class="games-list-panel" style="width: 350px; background: #262421; overflow-y: auto; border-right: 1px solid #444;">
+            <table class="history-table" style="width:100%; border-collapse: collapse; color: #ddd;">
+                <tbody id="historyBody">
+                    <tr><td style="padding:20px; text-align:center; color:#888;">Chargement...</td></tr>
+                </tbody>
+            </table>
+        </div>
 
+        <div class="board-panel" style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; background: #302e2b; padding:20px;">
+            
+            <h2 id="game-title" style="color:#ccc; margin-bottom:10px;">Sélectionnez une partie</h2>
+
+            <div style="display:flex; flex-direction:row; align-items:stretch; gap:10px;">
+                <div id="eval-bar-container" style="width:20px; height:400px; background:#555; position:relative; border-radius:3px; overflow:hidden; border: 1px solid #222;">
+                    <div id="eval-black" style="background:#444; height:50%; width:100%; transition: height 0.3s;"></div>
+                    <div id="eval-white" style="background:#fff; height:50%; width:100%; transition: height 0.3s;"></div>
+                </div>
+
+                <div id="board" style="width: 400px;"></div>
+                
+                <div id="moves-analysis-panel" style="width:220px; height:400px; background:#262421; overflow-y:auto; border:1px solid #444; display:none;">
+                    <div style="padding:10px; border-bottom:1px solid #555; background:#1e1e1e;">
+                        <div id="white-accuracy" style="color:white; margin-bottom:5px;">Blancs: -</div>
+                        <div id="black-accuracy" style="color:white;">Noirs: -</div>
+                    </div>
+                    <div id="moves-list" style="font-size:0.9em; color:#ddd;"></div>
+                </div>
+            </div>
+
+            <div class="controls" style="margin-top: 15px; display:flex; gap:10px;">
+                <button class="nav-btn" onclick="firstMove()">⏪</button>
+                <button class="nav-btn" onclick="prevMove()">◀️</button>
+                <button class="nav-btn" onclick="nextMove()">▶️</button>
+                <button class="nav-btn" onclick="lastMove()">⏩</button>
+                <button class="nav-btn" onclick="flipBoard()">🔄</button>
+            </div>
+
+            <button id="btn-analyze" onclick="analyzeCurrentGame()" style="margin-top:15px; background:#27ae60; color:white; padding:10px 20px; border:none; border-radius:4px; cursor:pointer; font-size:16px; display:none;">
+                🔍 Lancer l'Analyse (Stockfish)
+            </button>
+
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+    
     <script src="js/history.js"></script>
 </body>
 </html>
