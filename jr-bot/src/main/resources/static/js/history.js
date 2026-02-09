@@ -7,18 +7,12 @@ let currentMoveIndex = -1;
 
 // Configuration des icônes de classification
 const CLASSIFICATION_ICONS = {
-    "BRILLIANT": "!!", "GREAT": "!", "BEST": "★", "EXCELLENT": "✓",
-    "GOOD": "✓", "INACCURACY": "?!", "MISTAKE": "?", "BLUNDER": "??", "BOOK": "📖"
+    "BRILLIANT": "‼️", "GREAT": "❗", "BEST": "⭐", "EXCELLENT": "👍",
+    "GOOD": "✅", "INACCURACY": "⁉️", "MISTAKE": "❓", "BLUNDER": "❓❓", "BOOK": "📔"
 };
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Initialisation du plateau avec le thème Wikipedia (images web)
-    board = Chessboard('board', {
-        position: 'start',
-        draggable: false,
-        pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
-    });
-
+    initBoard();
     loadHistoryList();
 
     // Navigation au clavier
@@ -27,6 +21,11 @@ document.addEventListener("DOMContentLoaded", () => {
         if (e.key === 'ArrowLeft') prevMove();
     });
 });
+
+function initBoard() {
+    board = Chessboard('board', { position: 'start', pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png' });
+}
+
 
 // --- 1. CHARGEMENT DE LA LISTE GAUCHE ---
 async function loadHistoryList() {
@@ -86,6 +85,9 @@ function loadGameOnBoard(g) {
     // Charger le PGN
     game.load_pgn(g.pgnText);
     
+    // ✅ CORRECTION: Sauvegarder l'historique complet des coups
+    fullGameHistory = game.history();
+    
     // Reset complet
     firstMove();
     
@@ -116,7 +118,7 @@ async function analyzeCurrentGame() {
         }
 
         console.log("Analyse reçue :", data);
-        analysisData = data.moves; // On stocke les coups analysés
+        analysisData = data.moves; 
         
         // Affichage Précision
         if(data.whiteAccuracy) $('#white-accuracy').text(`Blancs: ${data.whiteAccuracy.toFixed(1)}%`);
@@ -186,8 +188,6 @@ function updateBoardUI() {
     // Surbrillance dans la liste
     $('.move-row').removeClass('active');
     if (currentMoveIndex >= 0) {
-        // On essaye de trouver la ligne correspondante
-        // Note: L'index PGN correspond à l'index analysisData
         const rowIndex = Math.floor(currentMoveIndex / 2) * 2; 
         $(`#move-row-${rowIndex}`).addClass('active');
     }
@@ -205,19 +205,10 @@ function updateEvalFromAnalysis() {
     const currentAnalysis = analysisData[currentMoveIndex];
     if (currentAnalysis && currentAnalysis.evalScore !== null) {
         let score = currentAnalysis.evalScore;
-        // Si c'est aux noirs de jouer dans la position ANALYSÉE (donc après le coup blanc),
-        // Stockfish donne parfois le score relatif. Assurons-nous d'avoir un score absolu (positif = avantage blanc)
-        // Note : Ton backend semble stocker le score relatif au trait.
-        
-        // Simplification pour l'affichage :
-        // Si analysisData stocke le score "Point de vue du joueur qui vient de jouer" :
         let absScore = score;
         if (currentAnalysis.turn === 'BLACK' || currentAnalysis.turn === 'b') {
-            // Si c'était le tour des noirs, le score stocké est pour les noirs.
-            // Pour la barre (Blancs en bas), on inverse.
             absScore = -score;
         } else {
-             // C'était le tour des blancs, score positif = bon pour blanc
              absScore = score;
         }
         
@@ -225,13 +216,11 @@ function updateEvalFromAnalysis() {
     }
 }
 
+// ✅ CORRECTION: nextMove() joue maintenant réellement le coup suivant
 function nextMove() {
-    // On vérifie s'il reste des coups à jouer dans notre historique sauvegardé
     if (currentMoveIndex < fullGameHistory.length - 1) {
         currentMoveIndex++;
-        
-        game.move(fullGameHistory[currentMoveIndex]);
-        
+        game.move(fullGameHistory[currentMoveIndex]); // ← AJOUT: Jouer le coup
         updateBoardUI();
     }
 }
