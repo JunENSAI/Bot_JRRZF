@@ -80,7 +80,23 @@ docker compose down
 
 ---
 
-### Présentation du jeu : Les Echecs
+## Intégration Continue (CI) & Tests
+
+Le projet utilise Jenkins pour automatiser la validation du code. Ce pipeline agit comme une barrière de sécurité : une nouvelle fonctionnalité n'est intégrée que si elle ne casse pas l'existant.
+
+### Le Flux de Validation
+
+À chaque modification du code (`Push`), Jenkins exécute automatiquement les étapes suivantes :
+
+- **Compilation** : Vérifie que le code Java est syntaxiquement correct.
+
+- **Tests Unitaires** (`mvn test`) : Vérifie la logique du Bot, les règles d'échecs et les calculs de statistiques.
+
+- **Build** (`mvn package`) : Si et seulement si les tests réussissent, Jenkins génère le fichier exécutable .jar.
+
+---
+
+## Présentation du jeu : Les Echecs
 
 Je ne suis que joueur ammateur donc je vais expliquer ce que j'ai compris en général.
 

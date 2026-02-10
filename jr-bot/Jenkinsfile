@@ -9,34 +9,40 @@ pipeline {
     stages {
         stage('Compilation') {
             steps {
-                sh 'mvn clean compile -B'
+                dir('jr-bot') {
+                    sh 'mvn clean compile -B'
+                }
             }
         }
 
-        stage('tests') {
+        stage('Tests Unitaires') {
             steps {
-                echo '=== Lancement des Tests ==='
-                sh 'mvn test -B'
+                dir('jr-bot') {
+                    echo '=== 🧪 Lancement des Tests ==='
+                    sh 'mvn test -B'
+                }
             }
         }
 
-        stage('build') {
+        stage('Build JAR') {
             steps {
-                echo '=== Création du fichier JAR ==='
-                sh 'mvn package -DskipTests -B'
+                dir('jr-bot') {
+                    echo '===  Création du fichier JAR ==='
+                    sh 'mvn package -DskipTests -B'
+                }
             }
         }
     }
 
     post {
         always {
-            junit '**/target/surefire-reports/*.xml'
+            junit 'jr-bot/target/surefire-reports/*.xml'
         }
         success {
-            echo 'SUCCÈS : Le bot est compilé, testé et prêt à être déployé !'
+            echo 'SUCCÈS : Le JRRZF Bot est compilé et testé !'
         }
         failure {
-            echo ' ÉCHEC : Un test a planté. Pas de JAR généré. Corrige ton code !'
+            echo 'ÉCHEC : Un test a planté ou la compilation a échoué.'
         }
     }
 }
