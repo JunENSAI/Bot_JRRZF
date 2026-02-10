@@ -59,6 +59,14 @@ docker compose up --build -d
 
 **Accédez à l'application** : Ouvrez votre navigateur et allez sur :  http://localhost:8082
 
+Deux utilisateurs sont disponibles :
+
+```text
+username    Password    
+Martin  	Ineverdo0209
+Junior  	Chess@md91
+```
+
 **Arrêter l'application** :
 
 ```bash
