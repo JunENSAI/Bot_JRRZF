@@ -1,50 +1,86 @@
-Stockfish est le bot ultime en terme de jeux d'echecs. Il est opensource donc quoi de mieux que de s'entraîner avec lui sachant mes propres parties pour apprendre avec lui les bons coups.
+# JRRZF Bot - Moteur d'Échecs Personnalisé
 
-- **Côté affrontement** : Stockfish connait à travers mes parties les coups que j'ai joués donc le bot est constraint de jouer ce que j'ai joué tant que les coups existent dans la base `moves.csv`. Une fois leconnu est inconnu il utilise sa force calibré à `depth = 10` (environ 1800) pour m'affronter.
+Ce projet est un moteur d'échecs hybride conçu pour simuler un style de jeu spécifique basé sur un historique de parties, avec un repli sur Stockfish pour les positions inconnues. L'application repose sur une architecture microservices alliant la robustesse de Java Spring Boot pour le backend et la flexibilité de Python pour l'interface avec le moteur d'IA.
 
-- **Côté évaluation** : Stockfish a évalué plus de 5700 de mes parties, en ce sens il sait quel mauvais ou bon coup j'ai joué dans une partie ou une autre. Une fonctionnalité à ajouter dans l'application quand l'affrontement est terminé c'est de pouvoir analyser la partie avec son aide.
+---
 
-- **Côté entraînement** : Sachant mes principales ouvertures et défenses j'espère qu'il m'aide à m'améliorer sur ces ouvertures et défenses. Pour rendre plus consistent mon style de jeu il proposera des coups sur la position. Aussi, peut être proposé des entraînement tel qu'en voyant une position gagnante que j'ai raté après (je pense à une sorte de puzzle tiré des parties où j'ai eu l'avantage mais je l'ai laissé passer).
+## Architecture Technique
 
-# Configuration minimale
+Le projet est divisé en trois composants principaux :
 
-## Python 
+1.  **Backend (Java Spring Boot 3.2.2)** :
 
-- Créer un environnement virtuel pour ne pas avoir de problème de dépendances
+    * Gère l'API REST, l'authentification, la logique métier et les interactions avec la base de données.
+
+    * Orchestre les décisions : vérifie si un coup existe dans la base "historique" ou sollicite le module Python.
+
+2.  **Moteur IA (Python)** :
+
+    * Interface directe avec l'exécutable Stockfish.
+
+    * Fournit l'évaluation des positions (FEN) et les meilleurs coups.
+3.  **Base de Données (PostgreSQL)** :
+
+    * Stocke les utilisateurs, les parties jouées sur la plateforme (`platform_games`) et l'historique des coups importés (`moves`).
+
+---
+
+## Prérequis en local
+
+Si vous voulez le lancer sans docker, voici les prérequis :
+
+* **Système** : Linux (recommandé) ou Windows.
+* **Java** : JDK 21.
+* **Python** : Version 3.10+.
+* **Base de données** : PostgreSQL.
+* **Moteur** : Stockfish installé au niveau système.
+* **Build** : Maven.
+
+## Docker
+
+Le conteneur Docker inclut déjà l'intégralité de l'environnement nécessaire au fonctionnement de l'application. Cette solution vous dispense de toute configuration manuelle et assure un déploiement rapide.
+
+### Côté linux :
+
+Une installation guidé est fournie sur le lien : https://docs.docker.com/engine/install/ubuntu/
+
+
+### Côté Windows :
+
+Une installation guidé est fournie sur le lien : https://docs.docker.com/desktop/setup/install/windows-install/
+
+## Lancer l'application
+
+Une fois docker installé, lancez dans le terminal la commadne suivante :
 
 ```bash
-python3 -m venv bot_jr
+docker compose up --build -d
 ```
-- Activer l'environnement virtuel que vous venez de créer :
+
+**Accédez à l'application** : Ouvrez votre navigateur et allez sur :  http://localhost:8082
+
+**Arrêter l'application** :
 
 ```bash
-source ./Fine_Tuning_Stockfish/jr_bot/bin/activate
+docker compose down
 ```
+---
 
-- Installez les librairies nécessaires pour le bon fonctionnement des fichiers python
+## Fonctionnalités
 
-```bash
-cd Fine_Tuning_Stockfish
-pip install -r requirements.txt
-```
+- **Mimétisme de jeu** : Le bot privilégie les coups issus de la base de données historique (5700+ parties importées). Il reproduit ainsi le répertoire d’ouvertures et les tendances stratégiques du joueur.
 
-## Stockfish
+- **Mode compétitif** : Lorsqu’aucune donnée historique ne correspond à la position courante, le bot bascule automatiquement sur Stockfish configuré à depth=10 (≈1900 Elo) afin de garantir un niveau de jeu stable.
 
-- Disponible en téléchargement via les dépots `apt` avec les commandes :
+- **Analyse post-partie** : Chaque partie peut être réanalysée avec Stockfish pour mesurer la précision des coups, détecter les erreurs majeures et identifier les opportunités manquées.
 
-```bash
-sudo apt-get update
+- **Statistiques** : Un tableau de bord synthétise les performances globales : résultats par cadence (Bullet, Blitz, Rapide), par couleur, taux de victoire, nulles et défaites.
 
-sudo apt-get install stockfish
-```
+- **Explorateur d’ouvertures** : Un module dédié permet de visualiser les ouvertures jouées, leurs fréquences d’apparition et les taux de victoire associés aux premiers coups.
 
-- Verification de l'installation :
+---
 
-```bash
-which stockfish
-```
-
-### Petit historique : Les Echecs
+### Présentation du jeu : Les Echecs
 
 Je ne suis que joueur ammateur donc je vais expliquer ce que j'ai compris en général.
 
@@ -95,14 +131,9 @@ Vous avez :
 
 ![position_depart](img/initial_pos.png)
 
+### PGN
 
-## Structure du répo
-
-### data_pgn
-
-Contient les **5675** parties que j'ai eu à jouer sur mon compte personnel sur la plateforme `chess.com`.
-
-Le fichier est enregistré sous un format `.pgn` (**P**ortable **G**ame **N**otation) dont la structure est comme ceci :
+Un fichier sous un format `.pgn` (**P**ortable **G**ame **N**otation) récupéré de la plateforme https://www.chess.com/ a une structure comme suite :
 
 ```pgn
 [Event "Live Chess"]  <-- partie en temps réel
@@ -140,145 +171,66 @@ Explication des notations (pas en entier vu que ça prendrait trop de lignes) :
 
     - \# : c'est le signe de l'echec et mat (le roi est en echec mais n'a plus de case de fuite alors que c'est à son tour de jouer).
 
-## Java
+## Présentation de l'application
 
-### Configuration et Installation
+L'application a 6 sections sous forme de carte :
 
-Sous Linux pour installer java il suffit de taper les commandes suivantes :
+### JOUER : Affronter le bot
 
-```bash
-sudo apt update
-sudo apt install openjdk-21-jdk
-```
+Lance une nouvelle partie contre le JRRZF Bot. Vous choisissez votre couleur et la cadence (Blitz, Rapide, etc.). Le bot adaptera son style : il jouera vos coups historiques si la position est connue, ou utilisera Stockfish (niveau 1900) si elle est inconnue.
 
-Pour verifier que java a été bien installé sur votre ordinateur :
-```bash
-java --version
-```
+![cadence](img/affronter_bot.png)
 
-Pour initialiser un projet Springboot java vous pouvez générer un zip contenant directement le fichier `pom.xml` ,l'arborescence et les dépendances dont vous aurez besoin via le site : https://start.spring.io/ .
+![interface](img/screen_battle.png)
 
-Un exemple de configuration serait :
+---
 
-```properties
-Project : maven
-Language : Java
-Spring Boot : 4.0.2
-Project Metadata : {
-    Group : com.chess
-    Artifact : jr-bot
-    Name : jr-bot
-    Description : Bot stockfish avec mes parties
-    Package name : com.chess.jr_bot
-    Packaging : Jar
-    Configuration : Properties
-    Java : 21
-}
-Dependencies : {
-    Spring Web : Permet de créer des applications web et des API REST
-    Spring Data JPA : Simplifie l'accès aux données avec JPA/Hibernate
-    ProgreSQL Driver : Driver JDBC pour se connecter à PostgreSQL
-    Lombok : Réduit le code boilerplate avec des annotations
-}
-```
+### ANALYSE (Revoir mes parties & Erreurs)
 
-Une fois généré dezippez le dossier directement à la racine de votre projet git. Ensuite installez `maven` :
+Permet de charger une partie terminée pour la soumettre au moteur Stockfish. L'outil identifie vos erreurs (blunders), imprécisions et les occasions manquées, avec une courbe d'évaluation en temps réel.
 
-```bash
-sudo apt install maven
-```
+![analysis](img/analyse.png)
 
-Vous pouvez lancer l'application telle qu'elle est :
-```bash
-cd jr-bot
-mvn spring-boot:run
-```
+---
 
-Pour lancer l'application avec de la donnée sur Postgres il faut rajouter dans `src/main/resources/application.properties` les configurations suivantes :
+### PROFIL (Résultat affrontement)
 
-```properties
-server.port=8080 
-spring.datasource.url=jdbc:postgresql://localhost:5432/bot_db
-spring.datasource.username=jr_bot
-spring.datasource.password=Ton_mdp
-spring.jpa.properties.hibernate.default_schema=chess_bot
-```
+Votre tableau de bord personnel. Il affiche vos statistiques de performance contre le bot : nombre de victoires, défaites et nulles, triées par type de cadence (Bullet, Blitz, Rapide).
 
-Le port 8080 doit être changé si vous avez par exemple `Jenkins` présent sur ce port.
+![profile](img/stats.png)
 
-- `server.port = 8080` : port de lancement de l'application
+---
 
-- `spring.datasource.url=jdbc:postgresql://localhost:5432/bot_db` : bot_db a été crée dans l console progres (doit être crée en amont)
+### OUVERTURES (Mon répertoire) 
 
-- `spring.datasource.username` : ma logique est chaque utilisateur postgres sa base (donc on crée un user avec un username et un mot de passe. Par la suite on lui attribue une base de donnée bot_db).
+Un outil d'exploration basé sur vos 5700+ parties historiques. Il vous montre quels premiers coups vous jouez le plus souvent et quel est votre taux de réussite (Winrate) pour chaque ouverture, avec les Blancs et les Noirs.
 
-- `spring.jpa.properties.hibernate.default_schema=chess_bot` : le schema est celui crée dans DBeaver a l'aide du fichier `init_db.sql`.
+![openings](img/ouvertures.png)
 
-#### Pourquoi Java (Spring Boot) au lieu de tout faire en Python ?
+---
 
-On pourrait créer les notions orientées objets directement à travers Python mais je trouve que Java est mieux pour gérer tout ce qui est attrait à la POO.
+### PARTIES (Revoir l'historique)
 
-- **Côté performance** :  capabilité de gérer plusieurs réquêtes à la fois grâce à son modèle de Threading robuste.
+L'archivage complet de vos matchs joués sur cette application. Vous pouvez y rechercher une partie spécifique, voir le résultat et rejouer les coups un par un.
 
-- **Typage fort** : en essayant d'envoyer un Texte là où le code attend un Nombre, Java t'arrête avant même de lancer l'application (à la compilation).
+![game](img/ouvertures.png)
 
-- **Architecture "Microservices"**
+---
 
-    - `Python` : se concentre sur la communication avec stockfish et realise les calculs et recueille les données envoyés par celui ci
+### ENTRAÎNEMENT (Tactiques & Puzzles) 
 
-    - `Java` : se concentre sur la geestion des utilisateur, des parties, de la base de donnée. Communique avec python pour les coups pensé par stockfish pour le côté bot.
+Un mode dédié à la progression tactique. Le système vous propose des puzzles d'échecs (ex: "Les Blancs jouent et gagnent") pour vous entraîner à repérer des combinaisons gagnantes.
 
-### Classes 
+![training](img/tactique.png)
 
-1. **Controller (Points d'entrée API)** : Ces classes exposent les endpoints HTTP accessibles par le Frontend (React).
+---
 
-    - **`BotController.java`** : 
-        - Gère l'intelligence du Bot.
-        - `/api/bot/move` : Reçoit un FEN et renvoie le meilleur coup.
-        - `/api/bot/start` : Gère l'initialisation si le Bot joue les Blancs.
+## Problème probable
 
-    - **`AuthController.java`** : 
-        - Gère la sécurité.
-        - `/api/auth/login` : Vérifie le pseudo/mot de passe de l'utilisateur.
+- Le chrono pendant la partie contre le bot est mal synchronisée
 
-    - **`GameController.java`** : 
-        - Gère les données de la plateforme.
-        - `/api/platform/save` : Sauvegarde une partie terminée.
-        - `/api/platform/stats` : Calcule et renvoie les statistiques agrégées (Historique + Récent).
+- Le calcul dans Analyse de type Bilan de partie n'est pas précise façon celle de chess.com :
 
-2. **Service (Logique Métier)**
+    - absence de détection des coups `BRILLANT` et les coups `GREAT`
 
-    - **`BotService.java`** : **La classe la plus importante.**
-        - Contient l'algorithme de décision :
-            1. Regarde dans PostgreSQL si une position est connue.
-            2. Si connue et jugée "bonne", renvoie le coup historique (mimétisme).
-            3. Si inconnue ou erreur historique, appelle l'API Python (Stockfish).
-        - Gère aussi l'ouverture variée via pondération (Weighted Random).
-
-3. Entity (Modèle de Données) :Ces classes représentent les tables de la base de données PostgreSQL (ORM Hibernate).
-
-    - **`MoveEntity.java`** : 
-        - Mappe la table `moves`. Contient un FEN, le coup joué, et le score Stockfish.
-
-    - **`UserEntity.java`** : 
-        - Mappe la table `app_users`. Stocke les identifiants (username/password).
-
-    - **`GameEntity.java`** : 
-        - Mappe la table `platform_games`. Stocke les parties jouées sur le site (PGN complet, résultat, date).
-    
-4. **Repository (Accès Données)** : Interfaces gérées par Spring Data JPA pour interagir avec SQL sans écrire de requêtes manuelles.
-
-    - **`MoveRepository.java`** : Permet de trouver des coups par FEN (`findByFenStartingWith`).
-
-    - **`AppUserRepository.java`** : Permet de trouver un user par son pseudo.
-
-    - **`PlatformGameRepository.java`** : Contient des requêtes personnalisées (`@Query`) pour compter les victoires et le total de parties.
-
-5. **DTO (Data Transfer Objects)** : Objets utilisés pour transporter les données proprement entre le Frontend et le Backend.
-
-    - **`Login.java`** : Structure JSON reçue lors du login `{username, password}`.
-
-    - **`GameSave.java`** : Structure JSON reçue à la fin d'une partie `{pgn, result, white, black...}`.
-
-
-## HTML + CSS + JS (Frontend)
+    - une faille probable sur la détection des coups `BLUNDER` (les écarts pour considérer en tant que blunder sont pas précis)
