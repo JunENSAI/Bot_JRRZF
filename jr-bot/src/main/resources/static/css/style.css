@@ -527,6 +527,45 @@ th {color: #888;
     background: #4a4a4a; 
 }
 
+#moves-list .move-row { 
+    cursor: pointer; 
+    padding: 5px 10px; 
+    display: flex; 
+    justify-content: space-between; 
+    border-bottom: 1px solid #444; 
+    font-size: 0.9em;
+    color: #ddd;
+}
+
+#moves-list .move-row:hover { 
+    background-color: #444; 
+}
+
+/* On utilise .active-move pour correspondre à ton style existant ou .active */
+#moves-list .move-row.active { 
+    background-color: #3e8e41 !important; 
+    color: white !important; 
+}
+
+.classification-icon { 
+    width: 15px; 
+    height: 15px; 
+    display: inline-block; 
+    margin-left: 5px; 
+    vertical-align: middle;
+}
+
+/* Couleurs de classification (Stockfish) */
+.classif-BRILLIANT { color: #1baca6 !important; font-weight: bold; }
+.classif-GREAT     { color: #5c8bb0 !important; font-weight: bold; }
+.classif-BEST      { color: #96bc4b !important; }
+.classif-EXCELLENT { color: #96bc4b !important; }
+.classif-GOOD      { color: #96bc4b !important; opacity: 0.8; }
+.classif-INACCURACY { color: #f0c15c !important; }
+.classif-MISTAKE   { color: #e6912c !important; }
+.classif-BLUNDER   { color: #b33430 !important; font-weight: bold; }
+.classif-BOOK      { color: #a88865 !important; }
+
 /*----------------------------------------------------------*/
 
 /* training.html */

@@ -31,7 +31,7 @@ public class BotService {
     private final RestTemplate restTemplate;
     private final Random random = new Random();
     
-    private final String API_SERVICE = "http://localhost:5000/analyze?fen=";
+    private final String API_SERVICE = "http://chess_ai:5000/analyze?fen="; // localhost à la place de chess_ai si c'est pas utilisation de docker
 
     /**
      * Constructeur pour l'initialisation du service avec ses dépendances.

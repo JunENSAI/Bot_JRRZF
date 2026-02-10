@@ -18,6 +18,11 @@ document.addEventListener("DOMContentLoaded", () => {
         activeGameId = urlId;
     }
 
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') nextMove();
+        if (e.key === 'ArrowLeft') prevMove();
+    });
+
     document.getElementById("opponent-search").addEventListener("keypress", function(event) {
         if (event.key === "Enter") searchOpponent();
     });
